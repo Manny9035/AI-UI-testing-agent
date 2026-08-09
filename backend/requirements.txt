@@ -1,0 +1,5 @@
+# Add backend dependencies here
+fastapi
+uvicorn[standard]
+playwright
+pydantic
