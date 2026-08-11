@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from uuid import uuid4
 
@@ -37,6 +37,11 @@ class BrowserSession:
     page: Page
 
     step: int = 0
+
+    # Short-term memory for the AI agent.
+    agent_memory: list[dict] = field(
+        default_factory=list
+    )
 
 
 class SessionManager:
@@ -77,8 +82,6 @@ class SessionManager:
                 timeout=30000,
             )
 
-            # Give JavaScript applications time
-            # to finish rendering.
             try:
                 await page.wait_for_load_state(
                     "networkidle",
@@ -142,6 +145,45 @@ class SessionManager:
         return session
 
 
+    def get_memory(
+        self,
+        session_id: str,
+    ) -> list[dict]:
+        """
+        Return the short-term memory for a session.
+        """
+
+        session = self.get_session(
+            session_id
+        )
+
+        return session.agent_memory.copy()
+
+
+    def add_memory(
+        self,
+        session_id: str,
+        memory_entry: dict,
+    ) -> None:
+        """
+        Add one completed testing action to memory.
+        """
+
+        session = self.get_session(
+            session_id
+        )
+
+        session.agent_memory.append(
+            memory_entry
+        )
+
+        # Keep only the latest 20 entries.
+        if len(session.agent_memory) > 20:
+            session.agent_memory = (
+                session.agent_memory[-20:]
+            )
+
+
     async def observe_session(
         self,
         session_id: str,
@@ -192,6 +234,10 @@ class SessionManager:
         target: str | None = None,
         value: str | None = None,
     ) -> dict:
+        """
+        Execute an action in an existing browser session,
+        then observe the resulting page state.
+        """
 
         session = self.get_session(
             session_id
@@ -206,8 +252,7 @@ class SessionManager:
             value=value,
         )
 
-        # Give the page time to react to
-        # the action.
+        # Give the application time to respond.
         await page.wait_for_timeout(500)
 
         try:
@@ -237,8 +282,6 @@ class SessionManager:
             session_id
         )
 
-        # Gracefully close the browsing context
-        # before closing the browser.
         await session.context.close()
 
         await session.browser.close()

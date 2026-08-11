@@ -1,6 +1,17 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, HttpUrl
+from pydantic import (
+    BaseModel,
+    Field,
+    HttpUrl,
+)
+from app.planner.ai_planner import (
+    plan_next_action,
+)
 
+from app.agent.agent_runner import (
+    run_agent,
+    run_agent_step,
+)
 from app.browser.playwright_manager import (
     inspect_website,
     test_manual_interaction,
@@ -33,7 +44,12 @@ class ActionRequest(BaseModel):
     target: str | None = None
     value: str | None = None
 
-
+class AgentRunRequest(BaseModel):
+    max_steps: int = Field(
+        default=8,
+        ge=1,
+        le=20,
+    )
 # ============================================================
 # BASIC HEALTH CHECK
 # ============================================================
@@ -163,6 +179,49 @@ async def perform_action(
         )
 
 
+@app.post(
+    "/api/session/{session_id}/plan"
+)
+async def plan_session_action(
+    session_id: str,
+):
+    try:
+        session = session_manager.get_session(
+            session_id
+        )
+
+        observation = (
+            await session_manager.observe_session(
+                session_id
+            )
+        )
+        plan = await plan_next_action(
+                goal=session.goal,
+                observation=observation,
+                memory=session.agent_memory,
+            )
+
+        return {
+            "session_id": session_id,
+            "goal": session.goal,
+            "observation": observation,
+            "plan": plan,
+        }
+
+    except KeyError as error:
+        raise HTTPException(
+            status_code=404,
+            detail=str(error),
+        )
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=str(error),
+        )
+    
+
+
 # ============================================================
 # END TEST SESSION
 # ============================================================
@@ -172,6 +231,7 @@ async def perform_action(
     "/api/session/{session_id}"
 )
 async def close_session(
+
     session_id: str,
 ):
     try:
@@ -184,3 +244,86 @@ async def close_session(
             status_code=404,
             detail=str(error),
         )
+
+@app.post(
+    "/api/session/{session_id}/step"
+)
+async def agent_step(
+    session_id: str,
+):
+    try:
+        return await run_agent_step(
+            session_id
+        )
+
+    except KeyError as error:
+        raise HTTPException(
+            status_code=404,
+            detail=str(error),
+        )
+
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error),
+        )
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=str(error),
+        )
+
+@app.post(
+    "/api/session/{session_id}/run"
+)
+async def run_session_agent(
+    session_id: str,
+    request: AgentRunRequest,
+):
+    try:
+        return await run_agent(
+            session_id=session_id,
+            max_steps=request.max_steps,
+        )
+
+    except KeyError as error:
+        raise HTTPException(
+            status_code=404,
+            detail=str(error),
+        )
+
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error),
+        )
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=str(error),
+        )   
+
+@app.get(
+    "/api/session/{session_id}/memory"
+)
+async def get_session_memory(
+    session_id: str,
+):
+    try:
+        memory = session_manager.get_memory(
+            session_id
+        )
+
+        return {
+            "session_id": session_id,
+            "memory_size": len(memory),
+            "memory": memory,
+        }
+
+    except KeyError as error:
+        raise HTTPException(
+            status_code=404,
+            detail=str(error),
+        )    

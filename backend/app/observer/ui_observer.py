@@ -143,6 +143,7 @@ async def extract_inputs(page: Page) -> list[dict]:
         name = await element.get_attribute("name")
         placeholder = await element.get_attribute("placeholder")
         aria_label = await element.get_attribute("aria-label")
+        value = await element.input_value()
 
         element_id = f"input_{index}"
 
@@ -150,15 +151,18 @@ async def extract_inputs(page: Page) -> list[dict]:
             "(element, id) => element.setAttribute('data-ai-id', id)",
             element_id,
         )
+        
 
         inputs.append({
-            "id": element_id,
-            "tag": tag_name,
-            "type": input_type,
-            "name": name,
-            "placeholder": placeholder,
-            "aria_label": aria_label,
-            "disabled": await element.is_disabled(),
-        })
+    "id": element_id,
+    "tag": tag_name,
+    "type": input_type,
+    "name": name,
+    "placeholder": placeholder,
+    "aria_label": aria_label,
+    "value": value,
+    "disabled": await element.is_disabled(),
+        
+                    })
 
     return inputs
