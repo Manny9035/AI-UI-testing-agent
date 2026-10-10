@@ -279,7 +279,7 @@ function renderEmpty(): void {
   title.textContent = "Functional testing";
   const lede = document.createElement("p");
   lede.className = "lede";
-  lede.textContent = "Use + to choose a discipline. Add a focus, or send Functional Testing on its own.";
+  lede.textContent = "Use + to choose a discipline. Add a focus, or send the chip on its own.";
   const count = document.createElement("p");
   count.className = "count";
   count.textContent = folderLine();
@@ -351,7 +351,8 @@ function appendUser(turn: UserTurn): HTMLElement {
   } else {
     const ask = document.createElement("p");
     ask.className = "ask";
-    ask.textContent = "Full functional pass on this folder.";
+    const name = turn.disciplineLabel.replace(/^\//, "");
+    ask.textContent = `Full ${name} pass on this folder.`;
     article.append(ask);
   }
   const sync = document.createElement("p");
@@ -558,6 +559,9 @@ function writeReport(article: HTMLElement, report: TestReport): void {
     const pair = document.createElement("dl");
     pair.className = "pair";
     pair.append(pairRow("Expected", testCase.expected), pairRow("Actual", testCase.actual));
+    if (testCase.improvement) {
+      pair.append(pairRow("Improve", testCase.improvement));
+    }
     card.append(pair);
     if (testCase.evidence) {
       const details = document.createElement("details");
@@ -784,7 +788,7 @@ function chipElement(slashLabel: string, removable: boolean): HTMLSpanElement {
 function refreshComposer(): void {
   const discipline = disciplines.find((item) => item.id === disciplineId);
   draft.placeholder = discipline
-    ? "Add a focus, or send Functional Testing on its own"
+    ? `Add a focus, or send ${discipline.title} on its own`
     : "Ask Verity to test this project";
   composer.classList.toggle("is-running", running);
   send.classList.toggle("is-stop", running);
@@ -800,7 +804,7 @@ function refreshComposer(): void {
   }
   hint.textContent = draft.value.trim()
     ? "Enter to send · Shift+Enter for a new line"
-    : "Enter sends Functional Testing across this folder";
+    : `Enter sends ${discipline.title} across this folder`;
 }
 
 function showNotice(message: string): void {

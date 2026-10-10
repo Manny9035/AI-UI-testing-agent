@@ -5,6 +5,7 @@ export interface TestCase {
   expected: string;
   actual: string;
   evidence: string;
+  improvement?: string;
 }
 
 export interface TestReport {

@@ -6,7 +6,7 @@ export interface Discipline {
   enabled: boolean;
 }
 
-/** The challenge categories. Only functional testing is wired up in this build. */
+/** The challenge categories. Functional, API, and security testing run in this build. */
 export const DISCIPLINES: Discipline[] = [
   {
     id: "functional",
@@ -19,8 +19,8 @@ export const DISCIPLINES: Discipline[] = [
     id: "api",
     slash: "/API Testing",
     title: "API Testing",
-    description: "Contracts, status codes, and failure responses.",
-    enabled: false,
+    description: "Call the API, compare it with the code, and say what to change.",
+    enabled: true,
   },
   {
     id: "uiux",

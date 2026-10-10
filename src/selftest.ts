@@ -98,6 +98,10 @@ function testPackFilter(): void {
   const input = buildTurnInput("");
   assert.ok(input.includes("Functional testing"));
   assert.ok(input.includes("blocked, not passed"));
+  const api = buildTurnInput("orders", "api");
+  assert.ok(api.includes("API testing"));
+  assert.ok(api.includes("improvement"));
+  assert.ok(api.includes("orders"));
 }
 
 testTarRoundTrip();

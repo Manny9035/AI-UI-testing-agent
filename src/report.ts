@@ -79,6 +79,7 @@ function normalizeCase(value: unknown): TestCase | null {
     expected: asString(record.expected),
     actual: asString(record.actual),
     evidence: asString(record.evidence),
+    improvement: asString(record.improvement) || undefined,
   };
 }
 

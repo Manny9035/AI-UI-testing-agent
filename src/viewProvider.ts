@@ -192,7 +192,7 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
     this.postRun({ type: "phase", label: agent.phase });
     this.postStatus();
     try {
-      await this.pipeline(user, agent, prompt);
+      await this.pipeline(user, agent, prompt, disciplineId);
     } catch (error) {
       if (this.runEpoch === this.sessionEpoch) {
         this.failTurn(agent, error);
@@ -210,7 +210,7 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
     }
   }
 
-  private async pipeline(user: UserTurn, agent: AgentTurn, prompt: string): Promise<void> {
+  private async pipeline(user: UserTurn, agent: AgentTurn, prompt: string, disciplineId: string): Promise<void> {
     const root = this.rootPath();
     if (!root) {
       throw new Error("Open a folder first. Verity tests the project in this window.");
@@ -241,11 +241,12 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
       return;
     }
 
-    this.setPhase(agent, "Running functional tests");
+    const runningLabel = disciplineId === "api" ? "Checking the API" : "Running functional tests";
+    this.setPhase(agent, runningLabel);
     this.channel.appendLine(`Composer agent ${this.session.agentId}`);
     let result;
     try {
-      result = await this.session.send(buildTurnInput(prompt), {
+      result = await this.session.send(buildTurnInput(prompt, disciplineId), {
         signal,
         onEvent: (event) => this.onCursorEvent(agent, event),
       });
@@ -309,7 +310,7 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
         title,
         body: clip([present(event.args), event.status === "running" ? "" : present(event.result)].filter(Boolean).join("\n"), 1200),
       });
-      this.setPhase(agent, event.status === "running" ? event.name : "Running functional tests");
+      this.setPhase(agent, event.status === "running" ? event.name : "Checking results");
       return;
     }
     if (event.type === "assistant") {
@@ -400,7 +401,7 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
       return "Choose a testing discipline from the + menu.";
     }
     if (!discipline.enabled) {
-      return `${discipline.title} is not in this build. Functional Testing is ready.`;
+      return `${discipline.title} is not in this build. Functional Testing and API Testing are ready.`;
     }
     if (!this.rootPath()) {
       return "Open a folder first. Verity tests the project in this window.";

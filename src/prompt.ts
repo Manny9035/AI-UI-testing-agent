@@ -3,7 +3,13 @@ export const COMPOSER_LABEL = "Composer Fast";
 
 export const REPORT_PATH = ".verity/report.json";
 
-export function buildTurnInput(userPrompt: string): string {
+export function buildTurnInput(userPrompt: string, disciplineId = "functional"): string {
+  if (disciplineId === "api") {
+    return apiTurnInput(userPrompt);
+  }
+  if (disciplineId === "security") {
+    return securityTurnInput(userPrompt);
+  }
   const focus = userPrompt.trim()
     ? userPrompt.trim()
     : "No extra focus. Cover the primary functional surface, at most 8 cases.";
@@ -30,6 +36,41 @@ export function buildTurnInput(userPrompt: string): string {
     "Report only what you judged.",
     `Write ${REPORT_PATH} with this JSON shape, and end your reply with the same JSON inside a verity-report fence:`,
     '{"summary":"one or two sentences","cases":[{"id":"FT-01","title":"short behavior name","status":"pass","expected":"what should happen","actual":"what you observed","evidence":"file and lines, or the command and its output"}]}',
+    "The narrative comes first. The fence comes last. Do not write anything after the fence.",
+  ].join("\n");
+}
+
+function apiTurnInput(userPrompt: string): string {
+  const focus = userPrompt.trim()
+    ? userPrompt.trim()
+    : "No extra focus. Cover the primary endpoints, at most 8.";
+  return [
+    "Discipline: API testing.",
+    "You are Verity. Call the API, then compare that response with the code that sends or handles it. Do not modify project source.",
+    "",
+    "1. Find the API in the code before you call it.",
+    "Read routes, clients, fetch or XHR calls, and any contract. For each endpoint, name the method, the path, and the file that implements the caller or the handler.",
+    "",
+    "2. Get the real response.",
+    "Send the request. Record the status and the body. Do not invent a response. Start a server only when the project already documents that command and the endpoint is not already reachable. If you still cannot get a response, mark the live check blocked and judge the implementation against the contract in the code.",
+    "",
+    "3. Compare the implementation with the response.",
+    "expected is what the code assumes. actual is what the API returned, or what the handler code produces when the API could not be called.",
+    "Fail the case when the code reads a field the response does not have, ignores a field the response does have, handles the wrong status, or drops an error body.",
+    "improvement is the change that would make the implementation match the API. One or two sentences. Leave it empty only when they already match.",
+    "",
+    "4. Cases.",
+    "If the user named a focus, stay inside it. Otherwise stop at 8 endpoints. Include one success, one bad input, and one failure status when the API has them.",
+    "pass means the implementation matches the observed response. fail means it does not. blocked means there was no response and the code had no contract to judge.",
+    "A case you did not call, and could not judge from the code, is blocked, not passed.",
+    "If you see a credential, redact it.",
+    "",
+    "User focus:",
+    focus,
+    "",
+    "Report only what you judged.",
+    `Write ${REPORT_PATH} with this JSON shape, and end your reply with the same JSON inside a verity-report fence:`,
+    '{"summary":"one or two sentences","cases":[{"id":"AT-01","title":"endpoint name","status":"fail","expected":"what the code assumes","actual":"the status and body you received","evidence":"the request and the file that handles it","improvement":"what to change so the code matches the API"}]}',
     "The narrative comes first. The fence comes last. Do not write anything after the fence.",
   ].join("\n");
 }
