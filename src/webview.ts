@@ -536,7 +536,7 @@ function writeReport(article: HTMLElement, report: TestReport): void {
   const download = document.createElement("button");
   download.type = "button";
   download.className = "text-button download";
-  download.textContent = "Download PDF";
+  download.textContent = "Download Report";
   download.addEventListener("click", () => {
     const index = Array.from(transcript.querySelectorAll(".turn")).indexOf(article);
     if (index >= 0) {

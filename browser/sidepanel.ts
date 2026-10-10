@@ -320,11 +320,6 @@ function revealReport(report: TestReport, disciplineId: string, project: string,
   for (const testCase of report.cases) {
     counts[testCase.status] += 1;
   }
-  const tone = counts.fail > 0 ? "fail" : counts.blocked > 0 ? "blocked" : "pass";
-  const verdict = document.createElement("p");
-  verdict.className = `verdict ${tone}`;
-  verdict.textContent =
-    tone === "fail" ? "Hand this back. The change is named." : tone === "blocked" ? "Part of this tab could not be judged." : "Ready to hand over.";
   const stats = document.createElement("div");
   stats.className = "stats";
   stats.append(stat("pass", counts.pass, "Passed"), stat("fail", counts.fail, "Failed"), stat("blocked", counts.blocked, "Blocked"));
@@ -338,11 +333,11 @@ function revealReport(report: TestReport, disciplineId: string, project: string,
   const download = document.createElement("button");
   download.type = "button";
   download.className = "download";
-  download.textContent = "Download PDF";
+  download.textContent = "Download Report";
   download.addEventListener("click", () => {
     void savePdf(report, disciplineId, project, focus);
   });
-  result.append(verdict, stats, findings, download);
+  result.append(stats, findings, download);
   const thread = transcript.querySelector(".thread");
   if (thread) {
     thread.append(result);
