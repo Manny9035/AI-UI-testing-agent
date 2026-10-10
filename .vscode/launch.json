@@ -3,7 +3,7 @@
   "configurations": [
     
     {
-      "name": "Run Verity",
+      "name": "Run NextOps",
       "type": "extensionHost",
       "request": "launch",
       "args": [

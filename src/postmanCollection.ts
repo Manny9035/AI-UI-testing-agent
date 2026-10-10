@@ -10,7 +10,7 @@ export function postmanCollection(name: string, calls: CallFact[]): PostmanColle
   return {
     info: {
       name,
-      description: "Collected by Verity from the open page.",
+      description: "Collected by NextOps from the open page.",
       schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     },
     item: calls.map((call) => ({
@@ -19,8 +19,8 @@ export function postmanCollection(name: string, calls: CallFact[]): PostmanColle
         method: call.method,
         url: call.url,
         description: call.sent
-          ? `Verity called this from the open page. Status ${call.status ?? "unknown"}. ${call.source}`
-          : `Verity did not send this, because it could change data. ${call.source}`,
+          ? `NextOps called this from the open page. Status ${call.status ?? "unknown"}. ${call.source}`
+          : `NextOps did not send this, because it could change data. ${call.source}`,
       },
     })),
   };

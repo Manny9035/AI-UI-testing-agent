@@ -46,7 +46,7 @@ export class CursorSession {
     const model = await resolveComposer(options.apiKey);
     const createOptions = {
       apiKey: options.apiKey,
-      name: "Verity",
+      name: "NextOps",
       model,
       disallowedTools: DISALLOWED_TOOLS,
       local: {
@@ -126,7 +126,7 @@ export function explainCursorError(error: unknown): Error {
     error instanceof AuthenticationError ||
     (error instanceof CursorAgentError && (error.status === 401 || error.status === 403))
   ) {
-    return new Error("Cursor rejected the API key. Check CURSOR_API_KEY in the Verity folder .env file.");
+    return new Error("Cursor rejected the API key. Check CURSOR_API_KEY in the NextOps folder .env file.");
   }
   if (error instanceof RateLimitError || (error instanceof CursorAgentError && error.status === 429)) {
     return new Error("This Cursor key is out of usage. Check the Cursor usage dashboard, then send again.");

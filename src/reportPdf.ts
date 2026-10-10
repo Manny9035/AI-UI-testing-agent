@@ -49,7 +49,7 @@ interface Voice {
 export function reportFileName(discipline: string, generatedAt: number): string {
   const date = new Date(generatedAt);
   const day = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-  return `Verity-${fileSlug(discipline)}-${day}.pdf`;
+  return `NextOps-${fileSlug(discipline)}-${day}.pdf`;
 }
 
 export async function buildReportPdf(input: ReportPdfInput): Promise<Uint8Array> {
@@ -58,8 +58,8 @@ export async function buildReportPdf(input: ReportPdfInput): Promise<Uint8Array>
   const voice = voiceFor(discipline);
   const doc = await PDFDocument.create();
   doc.setTitle(`${discipline} - ${project}`);
-  doc.setAuthor("Verity");
-  doc.setCreator("Verity");
+  doc.setAuthor("NextOps");
+  doc.setCreator("NextOps");
   doc.setSubject(voice.lede);
   const regular = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
@@ -552,7 +552,7 @@ class Sheet {
         thickness: 0.6,
         color: RULE,
       });
-      page.drawText("Verity", { x: MARGIN, y: 22, size: 8, font: this.boldFont, color: MUTED });
+      page.drawText("NextOps", { x: MARGIN, y: 22, size: 8, font: this.boldFont, color: MUTED });
       const right = `${index + 1}  /  ${total}`;
       const rightWidth = this.regularFont.widthOfTextAtSize(right, 8);
       page.drawText(right, {
@@ -565,7 +565,7 @@ class Sheet {
       const center = pdfSafe(project);
       const centerWidth = this.regularFont.widthOfTextAtSize(center, 8);
       const centerX = PAGE_WIDTH / 2 - centerWidth / 2;
-      const leftEdge = MARGIN + this.boldFont.widthOfTextAtSize("Verity", 8) + 18;
+      const leftEdge = MARGIN + this.boldFont.widthOfTextAtSize("NextOps", 8) + 18;
       const rightEdge = PAGE_WIDTH - MARGIN - rightWidth - 18;
       if (center && centerX > leftEdge && centerX + centerWidth < rightEdge) {
         page.drawText(center, { x: centerX, y: 22, size: 8, font: this.regularFont, color: MUTED });

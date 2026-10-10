@@ -44,7 +44,7 @@ async function run(discipline: string, prompt: string): Promise<void> {
   });
   const probe = injection?.result as PageProbe | undefined;
   if (!probe?.url) {
-    await emit({ type: "error", message: "Verity could not read this tab. Open a normal website and try again." });
+    await emit({ type: "error", message: "NextOps could not read this tab. Open a normal website and try again." });
     return;
   }
   let calls: CallFact[] = [];
@@ -108,7 +108,7 @@ async function callGets(endpoints: PageEndpoint[], pageUrl: string): Promise<Cal
           sent: false,
           status: response.status,
           source: endpoint.source,
-          body: `This address returned ${response.status}, so Verity did not treat a GET as the real call.`,
+          body: `This address returned ${response.status}, so NextOps did not treat a GET as the real call.`,
         });
         continue;
       }

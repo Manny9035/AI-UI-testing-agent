@@ -314,13 +314,13 @@ function renderEmpty(): void {
 
 function folderLine(): string {
   if (!workspaceName) {
-    return "Open a folder to give Verity something to test.";
+    return "Open a folder to give NextOps something to test.";
   }
   if (fileCount < 0) {
     return `Looking through ${workspaceName}…`;
   }
   if (fileCount === 0) {
-    return `${workspaceName} has no source files Verity can read.`;
+    return `${workspaceName} has no source files NextOps can read.`;
   }
   const noun = fileCount === 1 ? "source file" : "source files";
   return `${fileCount} ${noun} in ${workspaceName} are ready to test.`;
@@ -372,7 +372,7 @@ function appendAgent(turn: AgentTurn): HTMLElement {
   head.className = "turn-head";
   const who = document.createElement("span");
   who.className = "who";
-  who.textContent = "Verity";
+  who.textContent = "NextOps";
   const elapsed = document.createElement("span");
   elapsed.className = "elapsed";
   elapsed.textContent = formatElapsed((turn.endedAt ?? Date.now()) - turn.startedAt);
@@ -802,7 +802,7 @@ function refreshComposer(): void {
   const discipline = disciplines.find((item) => item.id === disciplineId);
   draft.placeholder = discipline
     ? `Add a focus, or send ${discipline.title} on its own`
-    : "Ask Verity to test this project";
+    : "Ask NextOps to test this project";
   composer.classList.toggle("is-running", running);
   send.classList.toggle("is-stop", running);
   send.disabled = !running && !discipline;

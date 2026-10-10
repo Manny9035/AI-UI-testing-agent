@@ -106,13 +106,50 @@ button, textarea { font: inherit; color: inherit; }
   text-align: center;
 }
 
-.live { display: grid; gap: 8px; align-content: end; min-height: 100%; }
-.live p {
+.thread { display: grid; gap: 10px; align-content: start; }
+
+.request {
+  justify-self: end;
+  max-width: 92%;
   margin: 0;
-  color: #94a3b8;
+  padding: 10px 12px;
+  border-radius: 16px 16px 4px 16px;
+  background: var(--slate);
+  color: white;
   animation: rise 0.35s ease both;
 }
-.live p.now { color: var(--ink); font-weight: 650; }
+.request .who {
+  margin: 0 0 2px;
+  color: #7dd3fc;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.request p:last-child { margin: 0; }
+
+.steps { list-style: none; margin: 0; padding: 2px 0 0; display: grid; gap: 7px; }
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  animation: rise 0.35s ease both;
+}
+.step i {
+  width: 6px;
+  height: 6px;
+  border-radius: 99px;
+  background: #cbd5e1;
+  flex: none;
+}
+.step.active { color: var(--ink); font-weight: 650; }
+.step.active i,
+.step.hold i {
+  background: var(--sky-deep);
+  animation: bip 1.15s ease-in-out infinite;
+}
+.step.done i { background: var(--emerald); }
 
 .result { display: grid; gap: 10px; }
 .verdict { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.03em; animation: rise 0.4s ease both; }
@@ -268,6 +305,11 @@ textarea:disabled { color: var(--muted); }
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+@keyframes bip {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.25; transform: scale(0.65); }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

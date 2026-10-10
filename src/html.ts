@@ -63,7 +63,7 @@ export function webviewDocument(options: {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta http-equiv="Content-Security-Policy" content="${csp}" />
   <link rel="stylesheet" href="${options.styleUri}" />
-  <title>Verity</title>
+  <title>NextOps</title>
 </head>
 <body>
   <div class="shell">
@@ -76,7 +76,7 @@ export function webviewDocument(options: {
       <button type="button" class="text-button" id="new-session">New</button>
     </header>
     <div class="keybar" id="keybar" hidden>
-      <p>Add <strong>CURSOR_API_KEY</strong> to the <strong>.env</strong> file in the Verity folder. The project you open is not where the key is read from.</p>
+      <p>Add <strong>CURSOR_API_KEY</strong> to the <strong>.env</strong> file in the NextOps folder. The project you open is not where the key is read from.</p>
       <button type="button" class="text-button" id="open-env">Open .env</button>
     </div>
     <main class="transcript" id="transcript" aria-live="polite"></main>
@@ -86,7 +86,7 @@ export function webviewDocument(options: {
         <div class="menu" id="menu" role="menu" hidden></div>
         <div class="chips" id="chips"></div>
         <label class="sr-only" for="draft">Message</label>
-        <textarea id="draft" rows="1" placeholder="Ask Verity to test this project"></textarea>
+        <textarea id="draft" rows="1" placeholder="Ask NextOps to test this project"></textarea>
         <div class="bar">
           <button type="button" class="plus" id="plus" aria-haspopup="menu" aria-expanded="false" aria-label="Choose a testing discipline">+</button>
           <span class="hint" id="hint">Use + to choose a discipline</span>

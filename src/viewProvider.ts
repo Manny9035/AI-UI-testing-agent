@@ -41,7 +41,7 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
   private runEpoch = 0;
 
   constructor(private readonly context: vscode.ExtensionContext) {
-    this.channel = vscode.window.createOutputChannel("Verity");
+    this.channel = vscode.window.createOutputChannel("NextOps");
     this.subscriptions.push(this.channel);
     this.cursorAgentId = context.workspaceState.get(STATE_AGENT);
     const storedRoot = context.workspaceState.get<string>(STATE_ROOT);
@@ -256,11 +256,11 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
   private async pipeline(user: UserTurn, agent: AgentTurn, prompt: string, disciplineId: string): Promise<void> {
     const root = this.rootPath();
     if (!root) {
-      throw new Error("Open a folder first. Verity tests the project in this window.");
+      throw new Error("Open a folder first. NextOps tests the project in this window.");
     }
     const key = resolveApiKey(this.extensionRoot());
     if (!key) {
-      throw new Error("Add CURSOR_API_KEY to the .env file in the Verity folder.");
+      throw new Error("Add CURSOR_API_KEY to the .env file in the NextOps folder.");
     }
     const signal = this.abort?.signal ?? AbortSignal.timeout(1);
     this.setPhase(agent, "Starting Composer Fast");
@@ -448,10 +448,10 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
       return `${discipline.title} is not in this build. Functional Testing, API Testing, and Security Testing are ready.`;
     }
     if (!this.rootPath()) {
-      return "Open a folder first. Verity tests the project in this window.";
+      return "Open a folder first. NextOps tests the project in this window.";
     }
     if (!resolveApiKey(this.extensionRoot())) {
-      return "Add CURSOR_API_KEY to the .env file in the Verity folder.";
+      return "Add CURSOR_API_KEY to the .env file in the NextOps folder.";
     }
     return null;
   }

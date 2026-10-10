@@ -44,7 +44,7 @@ export function readKeyFromEnvFile(filePath: string): string | undefined {
   return undefined;
 }
 
-/** Read one named value from the Verity folder, never from the project under test. */
+/** Read one named value from the NextOps folder, never from the project under test. */
 export function readNamedEnv(extensionRoot: string, name: string): string | undefined {
   const fromFile = readNamedValue(path.join(extensionRoot, ".env"), name);
   if (fromFile) {

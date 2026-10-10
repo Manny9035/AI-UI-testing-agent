@@ -147,7 +147,7 @@ function functionalCases(input: PageCheckInput): TestCase[] {
   const walk = probe.actions.map((action) => `${action.name}: ${action.result}`).join(" ");
   cases.push({
     id: cases.length < 9 ? `FT-0${cases.length + 1}` : "FT-08",
-    title: "Verity moved through the page",
+    title: "NextOps moved through the page",
     status: "pass",
     expected: "The open tab is scrolled, fields can take focus, and only safe controls are pressed.",
     actual: walk || "The page had no sections to move through.",
@@ -171,7 +171,7 @@ function apiCases(input: PageCheckInput): TestCase[] {
         id: "AT-01",
         title: "No API was found on this page",
         status: "blocked",
-        expected: "The page calls an API Verity can compare.",
+        expected: "The page calls an API NextOps can compare.",
         actual: "No fetch, XHR, or axios call was found in this tab.",
         evidence: input.probe.url,
         improvement: "Open the screen that loads data, then run API testing again.",
@@ -239,7 +239,7 @@ function securityCases(input: PageCheckInput): TestCase[] {
       title: "Session cookies are protected",
       status: "blocked",
       expected: "A session cookie is marked Secure and HttpOnly.",
-      actual: "This page did not set a cookie Verity could see.",
+      actual: "This page did not set a cookie NextOps could see.",
       evidence: probe.url,
       improvement: "If this page starts a session, set that cookie as Secure and HttpOnly.",
     });
@@ -293,7 +293,7 @@ function securityCases(input: PageCheckInput): TestCase[] {
       actual: unlabeled.length
         ? `${unlabeled.length} password field${unlabeled.length === 1 ? "" : "s"} have no label.`
         : `${passwordFields.length} password field${passwordFields.length === 1 ? "" : "s"} have a label.`,
-      evidence: "Password fields stay on the page. Verity does not submit them.",
+      evidence: "Password fields stay on the page. NextOps does not submit them.",
       improvement: unlabeled.length ? "Add a label to the password field so the browser and the person can tell what it is." : undefined,
     });
   }

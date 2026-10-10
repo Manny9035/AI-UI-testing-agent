@@ -23,14 +23,13 @@ const blurbs: Record<string, string> = {
   security: "Review inputs and protections.",
 };
 
-const script: Record<string, string[]> = {
-  functional: ["Reading this page", "Walking what a person can use", "Judging what holds", "Writing the handoff"],
-  api: ["Reading this page", "Calling the addresses on this page", "Comparing the response", "Writing the handoff"],
-  security: ["Reading this page", "Reviewing inputs and protections", "Naming how to prevent it", "Writing the handoff"],
+const stepsFor: Record<string, string[]> = {
+  functional: ["Reading the code…", "Walking what a person can use", "Judging what holds"],
+  api: ["Reading the code…", "Calling the addresses on this page", "Comparing the response"],
+  security: ["Reading the code…", "Reviewing inputs and protections", "Naming how to prevent it"],
 };
 
-const quiet = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-const beat = quiet ? 0 : 680;
+const stepMs = [5000, 7000, 5000];
 
 let discipline = "functional";
 let running = false;
@@ -177,11 +176,11 @@ async function start(): Promise<void> {
   }
   if (!hasChrome()) {
     notice.hidden = false;
-    notice.textContent = "Open this panel from the Verity icon on a website.";
+    notice.textContent = "Open this panel from the NextOps icon on a website.";
     return;
   }
-  const prompt = draft.value;
-  beginRun();
+  const prompt = draft.value.trim();
+  beginRun(prompt);
   playSequence();
   try {
     await chrome.runtime.sendMessage({ type: "run", discipline, prompt });
@@ -192,7 +191,7 @@ async function start(): Promise<void> {
   }
 }
 
-function beginRun(): void {
+function beginRun(prompt: string): void {
   notice.hidden = true;
   setMenuOpen(false);
   running = true;
@@ -208,40 +207,78 @@ function beginRun(): void {
   chip.disabled = true;
   spinner.hidden = false;
   box.classList.add("is-busy");
+  paintThread(prompt);
+}
+
+function paintThread(prompt: string): void {
   transcript.replaceChildren();
+  const thread = document.createElement("div");
+  thread.className = "thread";
+  const request = document.createElement("article");
+  request.className = "request";
+  const who = document.createElement("p");
+  who.className = "who";
+  who.textContent = chip.textContent || "Functional";
+  const text = document.createElement("p");
+  text.textContent = prompt || "Check this page.";
+  request.append(who, text);
+  const list = document.createElement("ol");
+  list.className = "steps";
+  thread.append(request, list);
+  transcript.append(thread);
+  transcript.scrollTop = 0;
 }
 
 function playSequence(): void {
-  const lines = script[discipline] || script.functional;
+  const lines = stepsFor[discipline] || stepsFor.functional;
   const token = view;
+  let elapsed = 0;
   lines.forEach((line, index) => {
-    later(index * beat, () => {
+    const at = elapsed;
+    later(at, () => {
       if (token !== view) {
         return;
       }
-      draft.placeholder = line;
-      paintLines(lines.slice(0, index + 1));
-      if (index === lines.length - 1) {
-        sequenceDone = true;
-        tryReveal();
-      }
+      showStep(line);
     });
+    elapsed += stepMs[index] || 5000;
+  });
+  later(elapsed, () => {
+    if (token !== view) {
+      return;
+    }
+    sequenceDone = true;
+    if (!pending) {
+      const active = transcript.querySelector(".step.active span");
+      if (active) {
+        active.textContent = "Writing the handoff…";
+      }
+      draft.placeholder = "Writing the handoff…";
+      transcript.querySelector(".step.active")?.classList.add("hold");
+    }
+    tryReveal();
   });
 }
 
-function paintLines(lines: string[]): void {
-  transcript.replaceChildren();
-  const live = document.createElement("section");
-  live.className = "live";
-  lines.forEach((line, index) => {
-    const row = document.createElement("p");
-    row.textContent = line;
-    if (index === lines.length - 1) {
-      row.className = "now";
-    }
-    live.append(row);
-  });
-  transcript.append(live);
+function showStep(label: string): void {
+  const list = transcript.querySelector(".steps");
+  if (!list) {
+    return;
+  }
+  const previous = list.querySelector(".step.active");
+  if (previous) {
+    previous.classList.remove("active");
+    previous.classList.add("done");
+  }
+  const item = document.createElement("li");
+  item.className = "step active";
+  const mark = document.createElement("i");
+  const text = document.createElement("span");
+  text.textContent = label;
+  item.append(mark, text);
+  list.append(item);
+  draft.placeholder = label;
+  item.scrollIntoView({ block: "nearest" });
 }
 
 function tryReveal(): void {
@@ -259,7 +296,7 @@ function fail(message: string): void {
   finishRun();
   notice.hidden = false;
   notice.textContent = message;
-  renderEmpty();
+  transcript.querySelector(".steps")?.remove();
 }
 
 function finishRun(): void {
@@ -276,8 +313,7 @@ function finishRun(): void {
 }
 
 function revealReport(report: TestReport, disciplineId: string, project: string, focus: string): void {
-  const token = view;
-  transcript.replaceChildren();
+  transcript.querySelector(".steps")?.remove();
   const result = document.createElement("section");
   result.className = "result";
   const counts = { pass: 0, fail: 0, blocked: 0 };
@@ -294,32 +330,27 @@ function revealReport(report: TestReport, disciplineId: string, project: string,
   stats.append(stat("pass", counts.pass, "Passed"), stat("fail", counts.fail, "Failed"), stat("blocked", counts.blocked, "Blocked"));
   const findings = document.createElement("div");
   findings.className = "findings";
-  result.append(verdict, stats, findings);
-  transcript.append(result);
-  host.textContent = project || host.textContent;
   report.cases.forEach((testCase, index) => {
-    later(quiet ? 0 : 160 * (index + 1), () => {
-      if (token !== view) {
-        return;
-      }
-      findings.append(findingCard(testCase));
-      transcript.scrollTop = transcript.scrollHeight;
-    });
+    const card = findingCard(testCase);
+    card.style.animationDelay = `${Math.min(index, 6) * 70}ms`;
+    findings.append(card);
   });
-  later(quiet ? 0 : 160 * (report.cases.length + 1) + 80, () => {
-    if (token !== view) {
-      return;
-    }
-    const download = document.createElement("button");
-    download.type = "button";
-    download.className = "download";
-    download.textContent = "Download PDF";
-    download.addEventListener("click", () => {
-      void savePdf(report, disciplineId, project, focus);
-    });
-    result.append(download);
-    transcript.scrollTop = transcript.scrollHeight;
+  const download = document.createElement("button");
+  download.type = "button";
+  download.className = "download";
+  download.textContent = "Download PDF";
+  download.addEventListener("click", () => {
+    void savePdf(report, disciplineId, project, focus);
   });
+  result.append(verdict, stats, findings, download);
+  const thread = transcript.querySelector(".thread");
+  if (thread) {
+    thread.append(result);
+  } else {
+    transcript.replaceChildren(result);
+  }
+  host.textContent = project || host.textContent;
+  transcript.scrollTop = 0;
 }
 
 function findingCard(testCase: TestReport["cases"][number]): HTMLElement {

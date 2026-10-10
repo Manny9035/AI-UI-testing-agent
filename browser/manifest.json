@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Verity",
+  "name": "NextOps",
   "version": "0.1.0",
   "description": "Check the website you have open. Functional, API, and security results you can hand over.",
   "permissions": ["sidePanel", "activeTab", "scripting", "tabs", "cookies"],
@@ -12,7 +12,7 @@
     "default_path": "sidepanel.html"
   },
   "action": {
-    "default_title": "Open Verity",
+    "default_title": "Open NextOps",
     "default_icon": {
       "16": "icon-16.png",
       "48": "icon-48.png"

@@ -53,7 +53,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, "127.0.0.1", () => {
-  console.log(`Verity browser bridge listening on http://127.0.0.1:${PORT}`);
+  console.log(`NextOps browser bridge listening on http://127.0.0.1:${PORT}`);
 });
 
 async function check(body: CheckBody): Promise<{ report: TestReport; notes: string[] }> {
@@ -75,7 +75,7 @@ async function check(body: CheckBody): Promise<{ report: TestReport; notes: stri
     const apiKey = readNamedEnv(root, "POSTMAN_API_KEY");
     if (apiKey) {
       try {
-        const collection = postmanCollection(`Verity ${body.project || "page"}`, body.calls);
+        const collection = postmanCollection(`NextOps ${body.project || "page"}`, body.calls);
         const id = await savePostmanCollection(apiKey, collection, readNamedEnv(root, "POSTMAN_WORKSPACE_ID"));
         notes.push("Saved the requests to Postman.");
         report = {
@@ -119,7 +119,7 @@ async function phrase(apiKey: string, report: TestReport, focus: string): Promis
   const model = await resolveComposer(apiKey);
   const result = await Agent.prompt(
     [
-      "You are Verity. Rewrite this report so a tester who is not a developer can hand it over.",
+      "You are NextOps. Rewrite this report so a tester who is not a developer can hand it over.",
       "Keep every case id, title, and status exactly as given.",
       "You may clarify the summary, expected, actual, and improvement.",
       "Use only the facts already in the report. Do not add cases.",

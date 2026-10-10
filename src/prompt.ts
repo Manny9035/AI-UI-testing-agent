@@ -15,7 +15,7 @@ export function buildTurnInput(userPrompt: string, disciplineId = "functional"):
     : "No extra focus. Cover the primary functional surface, at most 8 cases.";
   return [
     "Discipline: Functional testing.",
-    "You are Verity. Decide how this project should be tested from the code, then test it that way. Do not modify project source. Do not install packages, build, or start a server until the code says that is required.",
+    "You are NextOps. Decide how this project should be tested from the code, then test it that way. Do not modify project source. Do not install packages, build, or start a server until the code says that is required.",
     "",
     "1. Identify the project before any command.",
     "Read the manifest, README, and the real entry files. Name the stack in one sentence: static page, library, service, or app with a build.",
@@ -46,7 +46,7 @@ function apiTurnInput(userPrompt: string): string {
     : "No extra focus. Cover the primary endpoints, at most 8.";
   return [
     "Discipline: API testing.",
-    "You are Verity. Call the API, then compare that response with the code that sends or handles it. Do not modify project source.",
+    "You are NextOps. Call the API, then compare that response with the code that sends or handles it. Do not modify project source.",
     "",
     "1. Find the API in the code before you call it.",
     "Read routes, clients, fetch or XHR calls, and any contract. For each endpoint, name the method, the path, and the file that implements the caller or the handler.",
@@ -81,7 +81,7 @@ function securityTurnInput(userPrompt: string): string {
     : "No extra focus. Review the protections this code actually implements, at most 8.";
   return [
     "Discipline: Security testing.",
-    "You are Verity. Review how this project handles untrusted input and the protections around it. Recommend the prevention for each gap. Do not modify project source. Do not attack the app, and do not write exploit steps.",
+    "You are NextOps. Review how this project handles untrusted input and the protections around it. Recommend the prevention for each gap. Do not modify project source. Do not attack the app, and do not write exploit steps.",
     "",
     "1. Read the code that accepts input.",
     "Find forms, query parameters, request bodies, headers, file names, and anything written into HTML, a query, a shell command, or a path. Name the file and the lines. Do not install a scanner or start the app unless the protection cannot be judged from those lines.",

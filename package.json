@@ -1,7 +1,7 @@
 {
   "name": "verity",
-  "displayName": "Verity",
-  "description": "Verity reads the code, chooses the test, and reports what passed. Composer Fast keeps the analysis cheap.",
+  "displayName": "NextOps",
+  "description": "NextOps reads the code, chooses the test, and reports what passed. Composer Fast keeps the analysis cheap.",
   "version": "0.1.0",
   "publisher": "verity",
   "license": "MIT",
@@ -28,7 +28,7 @@
       "activitybar": [
         {
           "id": "verity",
-          "title": "Verity",
+          "title": "NextOps",
           "icon": "media/icon.svg"
         }
       ]
@@ -47,17 +47,17 @@
     "commands": [
       {
         "command": "verity.focus",
-        "title": "Verity: Open Agent",
+        "title": "NextOps: Open Agent",
         "icon": "$(beaker)"
       },
       {
         "command": "verity.newSession",
-        "title": "Verity: New Session",
+        "title": "NextOps: New Session",
         "icon": "$(add)"
       },
       {
         "command": "verity.configureKey",
-        "title": "Verity: Open API Key File"
+        "title": "NextOps: Open API Key File"
       }
     ],
     "menus": {

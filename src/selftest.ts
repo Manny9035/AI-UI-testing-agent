@@ -115,8 +115,8 @@ function testPackFilter(): void {
 
 async function testReportPdf(): Promise<void> {
   const generatedAt = Date.UTC(2026, 9, 10, 12);
-  assert.equal(reportFileName("Security Testing", generatedAt), "Verity-Security-Testing-2026-10-10.pdf");
-  assert.equal(reportFileName("UI/UX Testing", generatedAt), "Verity-UI-UX-Testing-2026-10-10.pdf");
+  assert.equal(reportFileName("Security Testing", generatedAt), "NextOps-Security-Testing-2026-10-10.pdf");
+  assert.equal(reportFileName("UI/UX Testing", generatedAt), "NextOps-UI-UX-Testing-2026-10-10.pdf");
   const security = await loadPdf(
     await buildReportPdf({
       project: "Checkout",
@@ -265,7 +265,7 @@ function testPageReport(): void {
   assert.equal(security.cases.find((item) => item.id === "ST-01")?.status, "fail");
   assert.equal(security.cases.find((item) => item.id === "ST-03")?.status, "fail");
   assert.match(security.cases.find((item) => item.id === "ST-03")?.improvement || "", /HttpOnly/);
-  const collection = postmanCollection("Verity shop.example", api.cases.length ? [{
+  const collection = postmanCollection("NextOps shop.example", api.cases.length ? [{
     method: "GET",
     url: "https://shop.example/api/orders",
     sent: true,
