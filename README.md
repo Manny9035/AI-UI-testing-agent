@@ -6,7 +6,7 @@ Functional testing agent for the folder you have open in VS Code.
 
 Verity is a software quality engineering extension. You pick **Functional Testing** from the + menu in the composer, optionally add a focus, and send. Composer runs locally against that folder through the Cursor SDK, executes the cases, and shows the run as it happens: commands, narrative, and a pass / fail / blocked report.
 
-API Testing calls the endpoint, compares the response with the code, and says what to change so they match. UI/UX Testing, Performance Testing, Security Testing, and Data & Database Testing are listed and not wired yet.
+API Testing calls the endpoint, compares the response with the code, and says what to change so they match. Security Testing reviews how inputs and protections are implemented and recommends how to prevent each gap. UI/UX Testing, Performance Testing, and Data & Database Testing are listed and not wired yet.
 
 ## Run it
 

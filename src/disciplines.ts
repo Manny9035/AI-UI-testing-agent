@@ -40,8 +40,8 @@ export const DISCIPLINES: Discipline[] = [
     id: "security",
     slash: "/Security Testing",
     title: "Security Testing",
-    description: "Auth, input handling, and exposed secrets.",
-    enabled: false,
+    description: "Review inputs and protections, then say how to prevent each gap.",
+    enabled: true,
   },
   {
     id: "data",

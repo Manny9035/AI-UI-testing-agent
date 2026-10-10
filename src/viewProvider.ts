@@ -241,7 +241,8 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
       return;
     }
 
-    const runningLabel = disciplineId === "api" ? "Checking the API" : "Running functional tests";
+    const runningLabel =
+      disciplineId === "api" ? "Checking the API" : disciplineId === "security" ? "Reviewing security" : "Running functional tests";
     this.setPhase(agent, runningLabel);
     this.channel.appendLine(`Composer agent ${this.session.agentId}`);
     let result;
@@ -401,7 +402,7 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
       return "Choose a testing discipline from the + menu.";
     }
     if (!discipline.enabled) {
-      return `${discipline.title} is not in this build. Functional Testing and API Testing are ready.`;
+      return `${discipline.title} is not in this build. Functional Testing, API Testing, and Security Testing are ready.`;
     }
     if (!this.rootPath()) {
       return "Open a folder first. Verity tests the project in this window.";

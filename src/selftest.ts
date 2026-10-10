@@ -102,6 +102,10 @@ function testPackFilter(): void {
   assert.ok(api.includes("API testing"));
   assert.ok(api.includes("improvement"));
   assert.ok(api.includes("orders"));
+  const security = buildTurnInput("login", "security");
+  assert.ok(security.includes("Security testing"));
+  assert.ok(security.includes("improvement"));
+  assert.ok(security.includes("login"));
 }
 
 testTarRoundTrip();

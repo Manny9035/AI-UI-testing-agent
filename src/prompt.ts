@@ -74,3 +74,36 @@ function apiTurnInput(userPrompt: string): string {
     "The narrative comes first. The fence comes last. Do not write anything after the fence.",
   ].join("\n");
 }
+
+function securityTurnInput(userPrompt: string): string {
+  const focus = userPrompt.trim()
+    ? userPrompt.trim()
+    : "No extra focus. Review the protections this code actually implements, at most 8.";
+  return [
+    "Discipline: Security testing.",
+    "You are Verity. Review how this project handles untrusted input and the protections around it. Recommend the prevention for each gap. Do not modify project source. Do not attack the app, and do not write exploit steps.",
+    "",
+    "1. Read the code that accepts input.",
+    "Find forms, query parameters, request bodies, headers, file names, and anything written into HTML, a query, a shell command, or a path. Name the file and the lines. Do not install a scanner or start the app unless the protection cannot be judged from those lines.",
+    "",
+    "2. Judge only what is implemented.",
+    "Look at input checks, output encoding, authentication on sensitive actions, authorization, secrets in source or client code, and cookies or sessions the code sets.",
+    "expected is the protection that should be there. actual is what the code does.",
+    "Fail the case when input is trusted without a check, output is inserted without encoding, a sensitive action has no auth check, or a secret is present in the project.",
+    "improvement is the specific prevention: what to validate, encode, require, or remove. One or two sentences. Leave it empty only when the protection is already in place.",
+    "",
+    "3. Cases.",
+    "If the user named a focus, stay inside it. Otherwise stop at 8. Skip categories the project does not have.",
+    "pass means the protection is implemented. fail means it is missing or incomplete. blocked means the code that would contain it is not in this folder.",
+    "A case you could not judge from the code is blocked, not passed.",
+    "If you see a credential, redact it. Do not repeat a secret in the report.",
+    "",
+    "User focus:",
+    focus,
+    "",
+    "Report only what you judged.",
+    `Write ${REPORT_PATH} with this JSON shape, and end your reply with the same JSON inside a verity-report fence:`,
+    '{"summary":"one or two sentences","cases":[{"id":"ST-01","title":"short protection name","status":"fail","expected":"the protection that should exist","actual":"what the code does","evidence":"file and lines","improvement":"how to prevent it"}]}',
+    "The narrative comes first. The fence comes last. Do not write anything after the fence.",
+  ].join("\n");
+}
