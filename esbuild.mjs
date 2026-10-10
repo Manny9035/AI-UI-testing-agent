@@ -83,8 +83,6 @@ if (watch) {
   console.log("[watch] build started");
   await Promise.all(contexts.map((context) => context.watch()));
   console.log("[watch] build finished");
-  // context.watch() resolves after the first build. Hold the process open,
-  // or VS Code ends the debug session and closes the Extension Development Host.
   await new Promise(() => {});
 } else {
   await Promise.all(builds.map((options) => esbuild.build(options)));

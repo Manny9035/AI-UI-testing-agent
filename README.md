@@ -22,7 +22,7 @@ npm run compile
 copy .env.example .env
 ```
 
-3. Open this repo in VS Code and press **F5** (the **Run Verity** launch config). A second window opens with no folder. Use **File → Open Folder** and choose the project you want to test, then click the Verity icon.
+3. Open this repo in VS Code, stop any debug session that is already running, and press **F5** (the **Run Verity** launch config). It compiles once, then a second window opens and stays open with no folder. Use **File → Open Folder** and choose the project you want to test, then click the Verity icon.
 
 4. Choose **Functional Testing** with **+**, add a prompt if you want one, and press Enter.
 

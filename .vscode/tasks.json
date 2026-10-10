@@ -2,14 +2,14 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "watch",
+      "label": "compile",
       "type": "npm",
-      "script": "watch",
-      "problemMatcher": "$esbuild-watch",
-      "isBackground": true,
+      "script": "compile",
+      "problemMatcher": [],
       "presentation": {
         "reveal": "silent",
-        "panel": "dedicated"
+        "panel": "shared",
+        "close": true
       },
       "group": {
         "kind": "build",
