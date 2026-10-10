@@ -276,10 +276,10 @@ function renderEmpty(): void {
   const root = document.createElement("section");
   root.className = "empty";
   const title = document.createElement("h2");
-  title.textContent = "What should we verify?";
+  title.textContent = "Functional testing";
   const lede = document.createElement("p");
   lede.className = "lede";
-  lede.textContent = "Functional testing for the folder you have open. Verity designs cases from the real behavior, runs them in a sandbox, and shows what passed, failed, or could not be executed.";
+  lede.textContent = "Use + to choose a discipline. Add a focus, or send Functional Testing on its own.";
   const count = document.createElement("p");
   count.className = "count";
   count.textContent = folderLine();
