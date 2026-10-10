@@ -9,6 +9,9 @@ import { priorityFor, shouldSkipPath } from "./pack";
 import { buildTurnInput } from "./prompt";
 import { drainSse, emptyRun, parseSseBlock, reduceEvent, visibleActivities } from "./reduce";
 import { parseVerityReport, stripReportFence } from "./report";
+import { buildPageReport } from "./pageReport";
+import { snapshotHtml } from "./playwrightPage";
+import { postmanCollection } from "./postmanCollection";
 import { buildReportPdf, reportFileName } from "./reportPdf";
 import { createTarGz } from "./tar";
 
@@ -209,12 +212,102 @@ async function loadPdf(bytes: Uint8Array): Promise<PDFDocument> {
   return PDFDocument.load(bytes);
 }
 
+function testPageReport(): void {
+  const probe = {
+    url: "https://shop.example/checkout",
+    title: "Checkout",
+    heading: "Checkout",
+    h1: 1,
+    hasMain: true,
+    https: true,
+    passwordInUrl: false,
+    snapshot: '- heading "Checkout" [level=1]\n- button "Save"',
+    html: "<html></html>",
+    controls: [
+      { role: "button", name: "", visible: true, enabled: true, href: "" },
+      { role: "button", name: "Save", visible: true, enabled: true, href: "" },
+    ],
+    images: [{ alt: null, src: "/logo.png", broken: false }],
+    fields: [{ label: "Email", type: "email" }],
+    links: [{ text: "Orders", href: "https://shop.example/orders", blank: true, noopener: false }],
+    endpoints: [{ method: "GET", url: "https://shop.example/api/orders", source: "fetch() in the page script" }],
+    actions: [{ name: "Walk", result: "Scrolled 1 section into view and focused 1 field." }],
+  };
+  const functional = buildPageReport({ discipline: "functional", focus: "checkout", probe, calls: [], cookies: [] });
+  assert.equal(functional.cases.find((item) => item.title === "Buttons and links have a name")?.status, "fail");
+  assert.equal(functional.cases.find((item) => item.title === "Pictures have a description")?.status, "fail");
+  assert.match(functional.summary, /checkout/);
+  const api = buildPageReport({
+    discipline: "api",
+    focus: "",
+    probe,
+    calls: [
+      {
+        method: "GET",
+        url: "https://shop.example/api/orders",
+        sent: true,
+        status: 200,
+        body: '{"id":1}',
+        source: "fetch() in the page script",
+      },
+    ],
+    cookies: [],
+  });
+  assert.equal(api.cases[0]?.status, "pass");
+  assert.match(api.cases[0]?.title || "", /GET/);
+  const security = buildPageReport({
+    discipline: "security",
+    focus: "",
+    probe: { ...probe, https: false },
+    calls: [],
+    cookies: [{ name: "sid", secure: false, httpOnly: false, sameSite: "lax" }],
+  });
+  assert.equal(security.cases.find((item) => item.id === "ST-01")?.status, "fail");
+  assert.equal(security.cases.find((item) => item.id === "ST-03")?.status, "fail");
+  assert.match(security.cases.find((item) => item.id === "ST-03")?.improvement || "", /HttpOnly/);
+  const collection = postmanCollection("Verity shop.example", api.cases.length ? [{
+    method: "GET",
+    url: "https://shop.example/api/orders",
+    sent: true,
+    status: 200,
+    source: "fetch() in the page script",
+  }] : []);
+  assert.match(collection.info.schema, /v2\.1\.0/);
+  assert.equal(collection.item[0]?.request.method, "GET");
+  const blocked = buildPageReport({
+    discipline: "api",
+    focus: "",
+    probe: { ...probe, endpoints: [] },
+    calls: [],
+    cookies: [],
+  });
+  assert.equal(blocked.cases[0]?.status, "blocked");
+}
+
+async function testPlaywrightSnapshot(): Promise<void> {
+  const html = `<!doctype html><html><head><title>Checkout</title></head><body><main><h1>Checkout</h1><button>Save</button><label>Email <input type="email"></label></main></body></html>`;
+  try {
+    const shot = await snapshotHtml(html, "https://shop.example/checkout");
+    assert.ok(shot.headings >= 1);
+    assert.ok(shot.buttons >= 1);
+    assert.match(shot.snapshot, /heading/i);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!/channel|executable|browserType|chrome|msedge|launch/i.test(message)) {
+      throw error;
+    }
+    console.log("playwright chrome skipped");
+  }
+}
+
 async function main(): Promise<void> {
   testTarRoundTrip();
   testReportAndMarkdown();
   testReducer();
   testPackFilter();
+  testPageReport();
   await testReportPdf();
+  await testPlaywrightSnapshot();
   console.log("verity selftest ok");
 }
 

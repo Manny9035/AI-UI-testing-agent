@@ -144,7 +144,7 @@ export function explainCursorError(error: unknown): Error {
   return new Error("The run failed.");
 }
 
-async function resolveComposer(apiKey: string): Promise<ModelSelection> {
+export async function resolveComposer(apiKey: string): Promise<ModelSelection> {
   if (composerModel) {
     return composerModel;
   }

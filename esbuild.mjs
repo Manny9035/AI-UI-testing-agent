@@ -72,7 +72,43 @@ const writePreview = {
   logLevel: "info",
 };
 
-const builds = test ? [selftest] : [extension, webview, previewBoot, writePreview];
+/** @type {import("esbuild").BuildOptions} */
+const sidepanel = {
+  entryPoints: ["browser/sidepanel.ts"],
+  outfile: "browser/dist/sidepanel.js",
+  bundle: true,
+  format: "iife",
+  platform: "browser",
+  target: "es2022",
+  logLevel: "info",
+};
+
+/** @type {import("esbuild").BuildOptions} */
+const browserBackground = {
+  entryPoints: ["browser/background.ts"],
+  outfile: "browser/dist/background.js",
+  bundle: true,
+  format: "iife",
+  platform: "browser",
+  target: "es2022",
+  logLevel: "info",
+};
+
+/** @type {import("esbuild").BuildOptions} */
+const browserBridge = {
+  entryPoints: ["src/browserBridge.ts"],
+  outfile: "browser/dist/bridge.js",
+  bundle: true,
+  external: ["playwright", "@cursor/sdk"],
+  format: "cjs",
+  platform: "node",
+  target: "node18",
+  logLevel: "info",
+};
+
+const builds = test
+  ? [{ ...selftest, external: ["playwright"] }]
+  : [extension, webview, previewBoot, writePreview, sidepanel, browserBackground, browserBridge];
 
 if (watch) {
   const contexts = await Promise.all(

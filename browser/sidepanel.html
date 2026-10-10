@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Verity</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div>
+        <p class="mark">Verity</p>
+        <p id="host" class="host">Open a website</p>
+      </div>
+      <button id="fresh" class="quiet" type="button">New</button>
+    </header>
+    <p id="bridge" class="bridge">Checking this page directly</p>
+    <main id="transcript"></main>
+    <form id="composer">
+      <p id="notice" class="notice" hidden></p>
+      <div id="menu" class="menu" hidden></div>
+      <div class="box">
+        <div id="chips" class="chips"></div>
+        <textarea id="draft" rows="2" placeholder="Anything specific to look at?"></textarea>
+        <div class="row">
+          <button id="plus" class="plus" type="button" aria-label="Choose a test">+</button>
+          <p id="hint" class="hint"></p>
+          <button id="send" class="send" type="submit">Check</button>
+        </div>
+      </div>
+    </form>
+    <script src="dist/sidepanel.js"></script>
+  </body>
+</html>

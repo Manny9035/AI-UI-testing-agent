@@ -10,6 +10,23 @@ API Testing calls the endpoint, compares the response with the code, and says wh
 
 When a run has findings, **Download PDF** saves a report for the discipline that was selected. It has the summary, the pass / fail / blocked counts, and each finding with what was expected, what was found, and the change to hand over.
 
+## Check a website
+
+Testers who are not working in the editor use the browser side panel. It sits on the right of the site they already have open.
+
+1. Build, then start the helper in this folder so Composer Fast can tighten the wording and, when `POSTMAN_API_KEY` is set, save API calls to Postman:
+
+```bash
+npm run compile
+npm run browser
+```
+
+2. In Chrome, open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked**, and select the `browser` folder.
+
+3. Open the website to check and click the Verity icon. The panel opens on the right. Choose **Functional testing**, **API testing**, or **Security testing**, add a note if you want one, and press **Check**. **Download PDF** saves the same handoff as the editor.
+
+Functional testing moves through the open tab, then Playwright reads that page with [`getByRole`](https://playwright.dev/docs/locators) and an [aria snapshot](https://playwright.dev/docs/aria-snapshots). API testing calls the GET requests the page makes and can store the collection with the [Postman API](https://learning.postman.com/docs/reference/postman-api/authentication). Security testing reviews the connection, cookies, and inputs. It does not attack the page. The result still stands if the helper is not running; Composer Fast and Postman are used when they are configured.
+
 ## Run it
 
 1. Install dependencies and build:
