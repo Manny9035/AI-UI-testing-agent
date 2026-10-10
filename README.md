@@ -8,6 +8,8 @@ Verity is a software quality engineering extension. You pick **Functional Testin
 
 API Testing calls the endpoint, compares the response with the code, and says what to change so they match. Security Testing reviews how inputs and protections are implemented and recommends how to prevent each gap. UI/UX Testing, Performance Testing, and Data & Database Testing are listed and not wired yet.
 
+When a run has findings, **Download PDF** saves a report for the discipline that was selected. It has the summary, the pass / fail / blocked counts, and each finding with what was expected, what was found, and the change to hand over.
+
 ## Run it
 
 1. Install dependencies and build:

@@ -52,7 +52,8 @@ export type WebviewToHost =
   | { type: "send"; discipline: string; prompt: string }
   | { type: "cancel" }
   | { type: "newSession" }
-  | { type: "openEnv" };
+  | { type: "openEnv" }
+  | { type: "downloadReport"; index: number };
 
 export type HostToWebview =
   | {

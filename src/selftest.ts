@@ -3,11 +3,13 @@ import { execFileSync } from "child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import path from "path";
+import { PDFDocument } from "pdf-lib";
 import { renderMarkdown } from "./markdown";
 import { priorityFor, shouldSkipPath } from "./pack";
 import { buildTurnInput } from "./prompt";
 import { drainSse, emptyRun, parseSseBlock, reduceEvent, visibleActivities } from "./reduce";
 import { parseVerityReport, stripReportFence } from "./report";
+import { buildReportPdf, reportFileName } from "./reportPdf";
 import { createTarGz } from "./tar";
 
 function testTarRoundTrip(): void {
@@ -108,8 +110,115 @@ function testPackFilter(): void {
   assert.ok(security.includes("login"));
 }
 
-testTarRoundTrip();
-testReportAndMarkdown();
-testReducer();
-testPackFilter();
-console.log("verity selftest ok");
+async function testReportPdf(): Promise<void> {
+  const generatedAt = Date.UTC(2026, 9, 10, 12);
+  assert.equal(reportFileName("Security Testing", generatedAt), "Verity-Security-Testing-2026-10-10.pdf");
+  assert.equal(reportFileName("UI/UX Testing", generatedAt), "Verity-UI-UX-Testing-2026-10-10.pdf");
+  const security = await loadPdf(
+    await buildReportPdf({
+      project: "Checkout",
+      discipline: "Security Testing",
+      focus: "login form",
+      generatedAt,
+      report: {
+        summary: "The login form checks the password, and the session cookie is missing a protection.",
+        cases: [
+          {
+            id: "ST-01",
+            title: `Session cookie is sent only over a protected connection ${"A".repeat(80)}`,
+            status: "fail",
+            expected: "The session cookie is marked Secure and HttpOnly.",
+            actual: "The cookie is set without those flags. “Smart quotes” should stay readable.",
+            evidence: "src/auth.ts sets the cookie in login().",
+            improvement: "Mark the session cookie Secure and HttpOnly when the login succeeds.",
+          },
+          {
+            id: "ST-02",
+            title: "Password length is checked before it is sent",
+            status: "pass",
+            expected: "Passwords shorter than 8 characters are rejected.",
+            actual: "The form rejects passwords under 8 characters.",
+            evidence: "src/login.js checks value.length.",
+          },
+          {
+            id: "ST-03",
+            title: "Reset token storage could not be judged",
+            status: "blocked",
+            expected: "Reset tokens expire and are stored out of the page.",
+            actual: "The reset module is not in this folder.",
+            evidence: "",
+          },
+        ],
+      },
+    }),
+  );
+  assert.equal(security.getTitle(), "Security Testing - Checkout");
+  assert.match(security.getSubject() ?? "", /prevent each gap/);
+  assert.ok(security.getPageCount() >= 1);
+
+  const api = await loadPdf(
+    await buildReportPdf({
+      project: "Orders",
+      discipline: "API Testing",
+      focus: "",
+      generatedAt,
+      report: {
+        summary: "The orders endpoint returns a field the client never reads.",
+        cases: [
+          {
+            id: "AT-01",
+            title: "List orders",
+            status: "fail",
+            expected: "The client reads id and total.",
+            actual: "The response also returns currency, and the client drops it.",
+            evidence: "GET /orders returned 200.",
+            improvement: "Read currency from the response before rendering the total.",
+          },
+        ],
+      },
+    }),
+  );
+  assert.match(api.getSubject() ?? "", /endpoint/);
+
+  const functional = await loadPdf(
+    await buildReportPdf({
+      project: "Checkout",
+      discipline: "Functional Testing",
+      focus: "",
+      generatedAt,
+      report: {
+        summary: "Empty cart checkout stays on the page.",
+        cases: [
+          {
+            id: "FT-01",
+            title: "Empty cart",
+            status: "pass",
+            expected: "Checkout does not submit an empty cart.",
+            actual: "The handler returns before submit.",
+            evidence: "src/cart.js",
+          },
+        ],
+      },
+    }),
+  );
+  assert.match(functional.getSubject() ?? "", /judged from the code/);
+}
+
+async function loadPdf(bytes: Uint8Array): Promise<PDFDocument> {
+  assert.equal(Buffer.from(bytes.subarray(0, 5)).toString("latin1"), "%PDF-");
+  return PDFDocument.load(bytes);
+}
+
+async function main(): Promise<void> {
+  testTarRoundTrip();
+  testReportAndMarkdown();
+  testReducer();
+  testPackFilter();
+  await testReportPdf();
+  console.log("verity selftest ok");
+}
+
+main().catch((error: unknown) => {
+  console.error(error);
+  process.exit(1);
+});

@@ -336,11 +336,30 @@ button:focus-visible {
 
 .report { margin-top: 10px; }
 
+.report-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.report-bar .download {
+  border: 1px solid var(--vscode-button-border, transparent);
+  background: var(--vscode-button-secondaryBackground, var(--vscode-toolbar-hoverBackground));
+  color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+  padding: 3px 8px;
+}
+
+.report-bar .download:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
+  color: var(--vscode-button-secondaryForeground);
+}
+
 .score {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 12px;
-  margin-bottom: 6px;
   font-size: 12px;
   font-weight: 600;
 }

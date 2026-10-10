@@ -83,6 +83,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@cursor/sdk": "^1.0.37"
+    "@cursor/sdk": "^1.0.37",
+    "pdf-lib": "^1.17.1"
   }
 }

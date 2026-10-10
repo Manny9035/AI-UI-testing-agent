@@ -531,7 +531,20 @@ function writeReport(article: HTMLElement, report: TestReport): void {
   const score = document.createElement("div");
   score.className = "score";
   score.append(scoreItem("pass", counts.pass, "passed"), scoreItem("fail", counts.fail, "failed"), scoreItem("blocked", counts.blocked, "blocked"));
-  host.append(score);
+  const bar = document.createElement("div");
+  bar.className = "report-bar";
+  const download = document.createElement("button");
+  download.type = "button";
+  download.className = "text-button download";
+  download.textContent = "Download PDF";
+  download.addEventListener("click", () => {
+    const index = Array.from(transcript.querySelectorAll(".turn")).indexOf(article);
+    if (index >= 0) {
+      vscode.postMessage({ type: "downloadReport", index });
+    }
+  });
+  bar.append(score, download);
+  host.append(bar);
   if (report.summary) {
     const summary = document.createElement("p");
     summary.className = "summary";

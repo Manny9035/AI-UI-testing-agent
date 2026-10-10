@@ -1,4 +1,5 @@
 import { readFile } from "fs/promises";
+import os from "os";
 import path from "path";
 import * as vscode from "vscode";
 import type { JsonlLocalAgentStore, SDKMessage } from "@cursor/sdk";
@@ -18,6 +19,7 @@ import { packWorkspace } from "./pack";
 import { buildTurnInput, COMPOSER_LABEL, REPORT_PATH } from "./prompt";
 import type { ActivityItem, AgentTurn, HostToWebview, Snapshot, UserTurn, WebviewToHost } from "./protocol";
 import { parseVerityReport } from "./report";
+import { buildReportPdf, reportFileName } from "./reportPdf";
 
 const STATE_AGENT = "verity.cursorAgentId";
 const STATE_ROOT = "verity.root";
@@ -155,8 +157,49 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
       this.abort?.abort();
       return;
     }
+    if (message.type === "downloadReport") {
+      await this.downloadReport(message.index);
+      return;
+    }
     if (message.type === "send") {
       await this.onSend(message.discipline, message.prompt);
+    }
+  }
+
+  private async downloadReport(index: number): Promise<void> {
+    const turn = this.turns[index];
+    if (!turn || turn.role !== "agent" || !turn.report) {
+      this.post({ type: "notice", message: "There is no report to download yet." });
+      return;
+    }
+    let discipline = "Functional Testing";
+    let focus = "";
+    for (let cursor = index - 1; cursor >= 0; cursor--) {
+      const previous = this.turns[cursor];
+      if (previous?.role === "user") {
+        discipline = previous.disciplineLabel.replace(/^\//, "").trim() || discipline;
+        focus = previous.prompt.trim();
+        break;
+      }
+    }
+    const project = vscode.workspace.workspaceFolders?.[0]?.name ?? "Open folder";
+    const generatedAt = turn.endedAt ?? Date.now();
+    try {
+      const bytes = await buildReportPdf({ project, discipline, focus, generatedAt, report: turn.report });
+      const root = this.rootPath() ?? os.homedir();
+      const target = await vscode.window.showSaveDialog({
+        defaultUri: vscode.Uri.file(path.join(root, reportFileName(discipline, generatedAt))),
+        filters: { PDF: ["pdf"] },
+        saveLabel: "Download report",
+      });
+      if (!target) {
+        return;
+      }
+      await vscode.workspace.fs.writeFile(target, bytes);
+      this.post({ type: "notice", message: `Report saved as ${path.basename(target.fsPath)}.` });
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : "Could not save the report.";
+      this.post({ type: "notice", message: detail });
     }
   }
 
