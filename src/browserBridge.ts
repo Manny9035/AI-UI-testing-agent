@@ -7,7 +7,7 @@ import type { CallFact } from "./pageReport";
 import { snapshotHtml } from "./playwrightPage";
 import { postmanCollection, savePostmanCollection } from "./postmanCollection";
 import type { TestCase, TestReport } from "./protocol";
-import { parseVerityReport } from "./report";
+import { parseNextOpsReport } from "./report";
 
 const PORT = 9477;
 const root = path.resolve(__dirname, "../..");
@@ -142,7 +142,7 @@ async function phrase(apiKey: string, report: TestReport, focus: string): Promis
   if (result.status !== "finished") {
     return null;
   }
-  const parsed = parseVerityReport(result.result || "");
+  const parsed = parseNextOpsReport(result.result || "");
   if (!parsed || !sameVerdicts(report, parsed)) {
     return null;
   }

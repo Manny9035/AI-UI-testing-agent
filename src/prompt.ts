@@ -1,7 +1,7 @@
 export const COMPOSER_MODEL_ID = "composer-2.5";
 export const COMPOSER_LABEL = "Composer Fast";
 
-export const REPORT_PATH = ".verity/report.json";
+export const REPORT_PATH = ".nextops/report.json";
 
 export function buildTurnInput(userPrompt: string, disciplineId = "functional"): string {
   if (disciplineId === "api") {
@@ -34,7 +34,7 @@ export function buildTurnInput(userPrompt: string, disciplineId = "functional"):
     focus,
     "",
     "Report only what you judged.",
-    `Write ${REPORT_PATH} with this JSON shape, and end your reply with the same JSON inside a verity-report fence:`,
+    `Write ${REPORT_PATH} with this JSON shape, and end your reply with the same JSON inside a nextops-report fence:`,
     '{"summary":"one or two sentences","cases":[{"id":"FT-01","title":"short behavior name","status":"pass","expected":"what should happen","actual":"what you observed","evidence":"file and lines, or the command and its output"}]}',
     "The narrative comes first. The fence comes last. Do not write anything after the fence.",
   ].join("\n");
@@ -69,7 +69,7 @@ function apiTurnInput(userPrompt: string): string {
     focus,
     "",
     "Report only what you judged.",
-    `Write ${REPORT_PATH} with this JSON shape, and end your reply with the same JSON inside a verity-report fence:`,
+    `Write ${REPORT_PATH} with this JSON shape, and end your reply with the same JSON inside a nextops-report fence:`,
     '{"summary":"one or two sentences","cases":[{"id":"AT-01","title":"endpoint name","status":"fail","expected":"what the code assumes","actual":"the status and body you received","evidence":"the request and the file that handles it","improvement":"what to change so the code matches the API"}]}',
     "The narrative comes first. The fence comes last. Do not write anything after the fence.",
   ].join("\n");
@@ -102,7 +102,7 @@ function securityTurnInput(userPrompt: string): string {
     focus,
     "",
     "Report only what you judged.",
-    `Write ${REPORT_PATH} with this JSON shape, and end your reply with the same JSON inside a verity-report fence:`,
+    `Write ${REPORT_PATH} with this JSON shape, and end your reply with the same JSON inside a nextops-report fence:`,
     '{"summary":"one or two sentences","cases":[{"id":"ST-01","title":"short protection name","status":"fail","expected":"the protection that should exist","actual":"what the code does","evidence":"file and lines","improvement":"how to prevent it"}]}',
     "The narrative comes first. The fence comes last. Do not write anything after the fence.",
   ].join("\n");

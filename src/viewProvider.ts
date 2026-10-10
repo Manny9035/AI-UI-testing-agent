@@ -18,14 +18,14 @@ import { webviewDocument } from "./html";
 import { packWorkspace } from "./pack";
 import { buildTurnInput, COMPOSER_LABEL, REPORT_PATH } from "./prompt";
 import type { ActivityItem, AgentTurn, HostToWebview, Snapshot, UserTurn, WebviewToHost } from "./protocol";
-import { parseVerityReport } from "./report";
+import { parseNextOpsReport } from "./report";
 import { buildReportPdf, reportFileName } from "./reportPdf";
 
-const STATE_AGENT = "verity.cursorAgentId";
-const STATE_ROOT = "verity.root";
+const STATE_AGENT = "nextops.cursorAgentId";
+const STATE_ROOT = "nextops.root";
 
-export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Disposable {
-  public static readonly viewId = "verity.agent";
+export class NextOpsViewProvider implements vscode.WebviewViewProvider, vscode.Disposable {
+  public static readonly viewId = "nextops.agent";
 
   private view?: vscode.WebviewView;
   private readonly channel: vscode.OutputChannel;
@@ -314,7 +314,7 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
     }
     this.channel.appendLine(`Run ${result.id} finished${result.requestId ? ` request ${result.requestId}` : ""}`);
 
-    const report = (await this.readReport(root)) || parseVerityReport(agent.answer);
+    const report = (await this.readReport(root)) || parseNextOpsReport(agent.answer);
     if (report) {
       agent.report = report;
       this.postRun({ type: "report", report });
@@ -396,7 +396,7 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
   private async readReport(root: string) {
     try {
       const raw = await readFile(path.join(root, REPORT_PATH), "utf8");
-      return parseVerityReport(raw);
+      return parseNextOpsReport(raw);
     } catch {
       return undefined;
     }

@@ -331,7 +331,7 @@ function revealReport(report: TestReport, disciplineId: string, project: string,
   const findings = document.createElement("div");
   findings.className = "findings";
   report.cases.forEach((testCase, index) => {
-    const card = findingCard(testCase);
+    const card = findingCard(testCase, disciplineId);
     card.style.animationDelay = `${Math.min(index, 6) * 70}ms`;
     findings.append(card);
   });
@@ -353,23 +353,55 @@ function revealReport(report: TestReport, disciplineId: string, project: string,
   transcript.scrollTop = 0;
 }
 
-function findingCard(testCase: TestReport["cases"][number]): HTMLElement {
-  const block = document.createElement("article");
+function findingCard(testCase: TestReport["cases"][number], disciplineId: string): HTMLElement {
+  const block = document.createElement("details");
   block.className = `finding ${testCase.status}`;
-  const top = document.createElement("header");
+  const summary = document.createElement("summary");
   const title = document.createElement("h3");
   title.textContent = testCase.title;
   const pill = document.createElement("span");
   pill.className = "pill";
   pill.textContent = testCase.status === "pass" ? "Passed" : testCase.status === "fail" ? "Failed" : "Blocked";
-  top.append(title, pill);
-  block.append(top);
+  summary.append(title, pill);
+  const body = document.createElement("div");
+  body.className = "body";
+  const labels = fieldLabels(disciplineId);
+  body.append(field(labels[0], testCase.expected), field(labels[1], testCase.actual));
   if (testCase.improvement) {
-    const change = document.createElement("p");
-    change.textContent = testCase.improvement;
-    block.append(change);
+    const change = document.createElement("div");
+    change.className = "improve";
+    change.append(field(improveLabel(disciplineId), testCase.improvement));
+    body.append(change);
   }
+  if (testCase.evidence) {
+    body.append(field("Evidence", testCase.evidence));
+  }
+  block.append(summary, body);
   return block;
+}
+
+function fieldLabels(disciplineId: string): [string, string] {
+  if (disciplineId === "api") {
+    return ["What the page expects", "What came back"];
+  }
+  if (disciplineId === "security") {
+    return ["Protection that should exist", "What this page does"];
+  }
+  return ["Expected", "Observed"];
+}
+
+function improveLabel(disciplineId: string): string {
+  return disciplineId === "security" ? "How to prevent it" : "What to change";
+}
+
+function field(label: string, value: string): HTMLElement {
+  const wrap = document.createElement("div");
+  const term = document.createElement("dt");
+  term.textContent = label;
+  const detail = document.createElement("dd");
+  detail.textContent = value;
+  wrap.append(term, detail);
+  return wrap;
 }
 
 function stat(kind: string, count: number, label: string): HTMLElement {

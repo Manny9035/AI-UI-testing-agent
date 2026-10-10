@@ -1,8 +1,8 @@
 import type { TestCase, TestReport } from "./protocol";
 
-const FENCE = /```verity-report\s*([\s\S]*?)```/i;
+const FENCE = /```nextops-report\s*([\s\S]*?)```/i;
 
-export function parseVerityReport(text: string): TestReport | null {
+export function parseNextOpsReport(text: string): TestReport | null {
   const fenced = text.match(FENCE);
   const source = fenced?.[1] ?? extractJsonObject(text);
   if (!source) {
@@ -17,12 +17,12 @@ export function parseVerityReport(text: string): TestReport | null {
 }
 
 export function stripReportFence(text: string): { prose: string; pending: boolean } {
-  const start = text.search(/```verity-report/i);
+  const start = text.search(/```nextops-report/i);
   if (start === -1) {
     return { prose: text.trim(), pending: false };
   }
   const prose = text.slice(0, start).trim();
-  const closed = /```verity-report[\s\S]*?```/i.test(text);
+  const closed = /```nextops-report[\s\S]*?```/i.test(text);
   return { prose, pending: !closed };
 }
 

@@ -8,7 +8,7 @@ import { renderMarkdown } from "./markdown";
 import { priorityFor, shouldSkipPath } from "./pack";
 import { buildTurnInput } from "./prompt";
 import { drainSse, emptyRun, parseSseBlock, reduceEvent, visibleActivities } from "./reduce";
-import { parseVerityReport, stripReportFence } from "./report";
+import { parseNextOpsReport, stripReportFence } from "./report";
 import { buildPageReport } from "./pageReport";
 import { snapshotHtml } from "./playwrightPage";
 import { postmanCollection } from "./postmanCollection";
@@ -24,7 +24,7 @@ function testTarRoundTrip(): void {
       data: Buffer.from("deep\n"),
     },
   ]);
-  const dir = mkdtempSync(path.join(tmpdir(), "verity-tar-"));
+  const dir = mkdtempSync(path.join(tmpdir(), "nextops-tar-"));
   const archivePath = path.join(dir, "project.tar.gz");
   writeFileSync(archivePath, archive);
   execFileSync("tar", ["-xzf", archivePath, "-C", dir]);
@@ -37,7 +37,7 @@ function testTarRoundTrip(): void {
 function testReportAndMarkdown(): void {
   const text = [
     "The login path holds.",
-    "```verity-report",
+    "```nextops-report",
     JSON.stringify({
       summary: "One failure on the empty password.",
       cases: [
@@ -47,7 +47,7 @@ function testReportAndMarkdown(): void {
     }),
     "```",
   ].join("\n");
-  const report = parseVerityReport(text);
+  const report = parseNextOpsReport(text);
   assert.ok(report);
   assert.equal(report?.cases[0].status, "fail");
   assert.equal(report?.cases[1].status, "pass");
@@ -55,7 +55,7 @@ function testReportAndMarkdown(): void {
   const split = stripReportFence(text);
   assert.equal(split.prose, "The login path holds.");
   assert.equal(split.pending, false);
-  assert.equal(stripReportFence("Hello\n```verity-report\n{").pending, true);
+  assert.equal(stripReportFence("Hello\n```nextops-report\n{").pending, true);
   const html = renderMarkdown("Use `<script>` and **do** this\n\n```ts\nconst x = 1;\n```");
   assert.ok(!html.includes("<script>"));
   assert.ok(html.includes("&lt;script&gt;"));
@@ -308,7 +308,7 @@ async function main(): Promise<void> {
   testPageReport();
   await testReportPdf();
   await testPlaywrightSnapshot();
-  console.log("verity selftest ok");
+  console.log("nextops selftest ok");
 }
 
 main().catch((error: unknown) => {

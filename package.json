@@ -1,9 +1,9 @@
 {
-  "name": "verity",
+  "name": "nextops",
   "displayName": "NextOps",
   "description": "NextOps reads the code, chooses the test, and reports what passed. Composer Fast keeps the analysis cheap.",
   "version": "0.1.0",
-  "publisher": "verity",
+  "publisher": "nextops",
   "license": "MIT",
   "engines": {
     "vscode": "^1.90.0"
@@ -20,24 +20,24 @@
     "agent"
   ],
   "activationEvents": [
-    "onView:verity.agent"
+    "onView:nextops.agent"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "verity",
+          "id": "nextops",
           "title": "NextOps",
           "icon": "media/icon.svg"
         }
       ]
     },
     "views": {
-      "verity": [
+      "nextops": [
         {
           "type": "webview",
-          "id": "verity.agent",
+          "id": "nextops.agent",
           "name": "Agent",
           "retainContextWhenHidden": true,
           "icon": "media/icon.svg"
@@ -46,25 +46,25 @@
     },
     "commands": [
       {
-        "command": "verity.focus",
+        "command": "nextops.focus",
         "title": "NextOps: Open Agent",
         "icon": "$(beaker)"
       },
       {
-        "command": "verity.newSession",
+        "command": "nextops.newSession",
         "title": "NextOps: New Session",
         "icon": "$(add)"
       },
       {
-        "command": "verity.configureKey",
+        "command": "nextops.configureKey",
         "title": "NextOps: Open API Key File"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "verity.newSession",
-          "when": "view == verity.agent",
+          "command": "nextops.newSession",
+          "when": "view == nextops.agent",
           "group": "navigation"
         }
       ]

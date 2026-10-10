@@ -176,19 +176,39 @@ button, textarea { font: inherit; color: inherit; }
 
 .findings { display: grid; gap: 8px; }
 .finding {
-  padding: 12px;
   background: white;
   border: 1px solid var(--line);
   border-radius: 14px;
   animation: rise 0.4s ease both;
 }
-.finding header { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
-.finding h3 { margin: 0; font-size: 14px; letter-spacing: -0.02em; }
+.finding summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+.finding summary::-webkit-details-marker { display: none; }
+.finding summary::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid #94a3b8;
+  border-bottom: 1.5px solid #94a3b8;
+  transform: rotate(45deg) translateY(-2px);
+  flex: none;
+}
+.finding[open] summary::after { transform: rotate(-135deg) translateY(-1px); }
+.finding h3 { flex: 1; margin: 0; font-size: 14px; letter-spacing: -0.02em; }
 .pill { border-radius: 99px; padding: 2px 8px; font-size: 11px; font-weight: 700; flex: none; }
 .finding.pass .pill { background: var(--emerald-bg); color: var(--emerald); }
 .finding.fail .pill { background: var(--red-bg); color: var(--red); }
 .finding.blocked .pill { background: var(--amber-bg); color: var(--amber); }
-.finding p { margin: 8px 0 0; color: #334155; }
+.finding .body { display: grid; gap: 8px; padding: 0 12px 12px; }
+.finding dt { margin: 0; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.finding dd { margin: 2px 0 0; }
+.finding .improve { padding: 10px; border-radius: 12px; background: #f0f9ff; }
 
 .download {
   width: 100%;

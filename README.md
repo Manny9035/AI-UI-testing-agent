@@ -53,6 +53,6 @@ A prompt is optional. With only the chip selected, NextOps runs a functional pas
 
 - Runs Composer Fast (`composer-2.5` with `fast: true`) through `@cursor/sdk` in the open folder. The agent reads the files it needs and runs a command only when the code requires it.
 - Reuses the same local agent for follow-up messages.
-- Asks the agent to execute cases, not to guess them, and to finish with a `verity-report` the panel renders as findings.
+- Asks the agent to execute cases, not to guess them, and to finish with a `nextops-report` the panel renders as findings.
 
 The **NextOps** output channel logs the Composer agent id and the run id. It does not log the API key.
