@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "fs";
 import path from "path";
 
-const KEY_NAMES = ["GEMINI_API_KEY", "GOOGLE_API_KEY"];
+const KEY_NAMES = ["GEMINI_API_KEY", "GENAI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY"];
 
 /** Read a local env file without printing values. Quoted values are unwrapped. */
 export function readKeyFromEnvFile(filePath: string): string | undefined {
@@ -23,7 +23,10 @@ export function readKeyFromEnvFile(filePath: string): string | undefined {
     if (eq <= 0) {
       continue;
     }
-    const name = trimmed.slice(0, eq).trim();
+    let name = trimmed.slice(0, eq).trim();
+    if (name.startsWith("export ")) {
+      name = name.slice("export ".length).trim();
+    }
     if (!KEY_NAMES.includes(name)) {
       continue;
     }

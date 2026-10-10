@@ -191,15 +191,7 @@ export class GeminiClient {
     const url = `${API}/interactions`;
     let attempt = { ...body };
     this.log(`POST /v1beta/interactions agent=${String(attempt.agent)} stream=${String(Boolean(attempt.stream))}`);
-    let response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "x-goog-api-key": this.apiKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(attempt),
-      signal,
-    });
+    let response = await this.send(url, attempt, signal);
     if (response.status === 400) {
       const detail = await response.clone().text();
       const next = { ...attempt };
@@ -218,19 +210,29 @@ export class GeminiClient {
       if (changed) {
         this.log("Retrying interaction without optional fields the API rejected");
         attempt = next;
-        response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "x-goog-api-key": this.apiKey,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(attempt),
-          signal,
-        });
+        response = await this.send(url, attempt, signal);
       }
+    }
+    for (let retry = 1; retry <= 2 && (response.status === 500 || response.status === 503); retry++) {
+      const waitMs = retry === 1 ? 2_000 : 5_000;
+      this.log(`Gemini returned ${response.status}. Retrying the same interaction in ${waitMs / 1000}s.`);
+      await delay(waitMs, signal);
+      response = await this.send(url, attempt, signal);
     }
     this.log(`Interaction response ${response.status}`);
     return response;
+  }
+
+  private send(url: string, body: Record<string, unknown>, signal: AbortSignal): Promise<Response> {
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        "x-goog-api-key": this.apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      signal,
+    });
   }
 }
 
@@ -292,7 +294,28 @@ async function explain(response: Response): Promise<string> {
   if (response.status === 429) {
     return "Gemini is rate limiting this key. Wait a moment, then send again.";
   }
+  if (response.status === 500 || response.status === 503) {
+    return "Gemini's Antigravity sandbox hit an internal error and stopped. The key was accepted. Send again.";
+  }
   return short || `Gemini returned HTTP ${response.status}.`;
+}
+
+function delay(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) {
+      reject(signal.reason instanceof Error ? signal.reason : new DOMException("Aborted", "AbortError"));
+      return;
+    }
+    const timer = setTimeout(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(signal.reason instanceof Error ? signal.reason : new DOMException("Aborted", "AbortError"));
+    };
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
 }
 
 function stringField(record: Record<string, unknown>, ...keys: string[]): string {
