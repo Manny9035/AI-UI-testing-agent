@@ -4,37 +4,44 @@ import type { TestReport } from "../src/protocol";
 
 const host = document.querySelector("#host") as HTMLElement;
 const bridge = document.querySelector("#bridge") as HTMLElement;
+const nav = document.querySelector("#nav") as HTMLElement;
+const meaning = document.querySelector("#meaning") as HTMLElement;
 const transcript = document.querySelector("#transcript") as HTMLElement;
 const composer = document.querySelector("#composer") as HTMLFormElement;
 const notice = document.querySelector("#notice") as HTMLElement;
-const menu = document.querySelector("#menu") as HTMLElement;
-const chips = document.querySelector("#chips") as HTMLElement;
 const draft = document.querySelector("#draft") as HTMLTextAreaElement;
-const plus = document.querySelector("#plus") as HTMLButtonElement;
 const hint = document.querySelector("#hint") as HTMLElement;
 const send = document.querySelector("#send") as HTMLButtonElement;
 const fresh = document.querySelector("#fresh") as HTMLButtonElement;
+const scan = document.querySelector("#scan") as HTMLElement;
+
+const meanings: Record<string, string> = {
+  functional: "Walk what a person sees. Pass holds. Fail names the change. Blocked could not be judged.",
+  api: "Call the addresses this page uses, then name the change that makes the page and the response agree.",
+  security: "Review inputs and protections, then say how to prevent each gap.",
+};
 
 const hints: Record<string, string> = {
-  functional: "Moves through this page and checks what a person can do.",
-  api: "Calls the APIs this page uses and compares the response.",
-  security: "Reviews inputs and protections, then says how to prevent each gap.",
+  functional: "Optional. Name one flow to stay inside.",
+  api: "Optional. Name one endpoint to stay inside.",
+  security: "Optional. Name one form or input to stay inside.",
 };
 
 let discipline = "functional";
 let running = false;
+let steps: string[] = [];
 
 void boot();
 
 function boot(): void {
-  renderMenu();
-  renderChip();
+  renderNav();
+  paintMeaning();
   renderEmpty();
   void refreshStatus();
-  plus.addEventListener("click", () => {
-    menu.hidden = !menu.hidden;
-  });
   fresh.addEventListener("click", () => {
+    if (running) {
+      return;
+    }
     notice.hidden = true;
     renderEmpty();
   });
@@ -46,9 +53,11 @@ function boot(): void {
   });
   composer.addEventListener("submit", (event) => {
     event.preventDefault();
-    menu.hidden = true;
     void start();
   });
+  if (!hasChrome()) {
+    return;
+  }
   chrome.runtime.onMessage.addListener((message: { type?: string }) => {
     if (message.type === "status") {
       paintStatus(message as { host: string | null; composer: boolean });
@@ -57,9 +66,7 @@ function boot(): void {
       paintPhase((message as { label: string }).label);
     }
     if (message.type === "report") {
-      running = false;
-      send.disabled = false;
-      send.textContent = "Check";
+      finishRun();
       const payload = message as {
         report: TestReport;
         notes?: string[];
@@ -70,16 +77,22 @@ function boot(): void {
       paintReport(payload.report, payload.notes || [], payload.discipline, payload.project, payload.focus);
     }
     if (message.type === "error") {
-      running = false;
-      send.disabled = false;
-      send.textContent = "Check";
+      finishRun();
       notice.hidden = false;
       notice.textContent = (message as { message: string }).message;
+      renderEmpty();
     }
   });
 }
 
+function hasChrome(): boolean {
+  return typeof chrome !== "undefined" && Boolean(chrome.runtime?.sendMessage);
+}
+
 async function refreshStatus(): Promise<void> {
+  if (!hasChrome()) {
+    return;
+  }
   const status = (await chrome.runtime.sendMessage({ type: "status" })) as { host: string | null; composer: boolean } | undefined;
   if (status) {
     paintStatus(status);
@@ -88,121 +101,221 @@ async function refreshStatus(): Promise<void> {
 
 function paintStatus(status: { host: string | null; composer: boolean }): void {
   host.textContent = status.host || "Open a website";
-  bridge.textContent = status.composer ? "Composer Fast ready" : "Checking this page directly";
+  bridge.textContent = status.composer ? "Composer Fast is ready to write the handoff" : "This check runs on the open tab";
 }
 
-function renderMenu(): void {
-  menu.replaceChildren();
+function renderNav(): void {
+  nav.replaceChildren();
+  const rail = document.createElement("div");
+  rail.className = "rail";
+  const later: string[] = [];
   for (const item of DISCIPLINES) {
+    const name = item.title.replace(" Testing", "");
+    if (!item.enabled) {
+      later.push(name);
+      continue;
+    }
     const button = document.createElement("button");
     button.type = "button";
-    button.disabled = !item.enabled;
-    const title = document.createElement("span");
-    title.textContent = item.enabled ? item.title : `${item.title} · Soon`;
-    const detail = document.createElement("small");
-    detail.textContent = item.description;
-    button.append(title, detail);
+    button.setAttribute("aria-current", item.id === discipline ? "true" : "false");
+    const mark = document.createElement("span");
+    mark.className = "mark";
+    mark.append(icon(item.id));
+    const label = document.createElement("span");
+    label.textContent = name;
+    button.append(mark, label);
     button.addEventListener("click", () => {
-      if (!item.enabled) {
+      if (running) {
         return;
       }
       discipline = item.id;
-      menu.hidden = true;
-      renderChip();
+      renderNav();
+      paintMeaning();
     });
-    menu.append(button);
+    rail.append(button);
   }
+  const planned = document.createElement("p");
+  planned.className = "planned";
+  planned.textContent = `Coming later: ${later.join(" · ")}`;
+  nav.append(rail, planned);
 }
 
-function renderChip(): void {
-  const selected = DISCIPLINES.find((item) => item.id === discipline);
-  chips.replaceChildren();
-  const chip = document.createElement("span");
-  chip.className = "chip";
-  chip.textContent = selected?.title || "Functional testing";
-  chips.append(chip);
+function paintMeaning(): void {
+  meaning.textContent = meanings[discipline] || meanings.functional;
   hint.textContent = hints[discipline] || hints.functional;
 }
 
 function renderEmpty(): void {
   transcript.replaceChildren();
-  const block = document.createElement("section");
-  block.className = "empty";
+  const hero = document.createElement("section");
+  hero.className = "hero";
+  const kicker = document.createElement("p");
+  kicker.className = "kicker";
+  kicker.textContent = "This tab";
   const title = document.createElement("h2");
-  title.textContent = "Check the page you have open";
+  title.textContent = "See what holds, what fails, and what to hand over.";
   const copy = document.createElement("p");
-  copy.textContent = "Choose a test, add a note if you want one part looked at, then press Check. You can download the result when it is ready.";
-  block.append(title, copy);
-  transcript.append(block);
+  copy.textContent = "Verity reads the tab you already have open, then writes a result a tester can hand over.";
+  const promise = document.createElement("div");
+  promise.className = "promise";
+  for (const line of [
+    ["pass", "Passed", "It holds."],
+    ["fail", "Failed", "Name the change."],
+    ["blocked", "Blocked", "Could not judge."],
+  ]) {
+    const card = document.createElement("div");
+    card.className = line[0];
+    const dot = document.createElement("i");
+    const strong = document.createElement("strong");
+    strong.textContent = line[1];
+    const span = document.createElement("span");
+    span.textContent = line[2];
+    card.append(dot, strong, span);
+    promise.append(card);
+  }
+  hero.append(kicker, title, copy, promise);
+  transcript.append(hero);
 }
 
 async function start(): Promise<void> {
   if (running) {
     return;
   }
+  if (!hasChrome()) {
+    notice.hidden = false;
+    notice.textContent = "Open this panel from the Verity icon on a website.";
+    return;
+  }
   notice.hidden = true;
   running = true;
   send.disabled = true;
+  fresh.disabled = true;
   send.textContent = "Checking";
-  transcript.replaceChildren();
+  document.body.classList.add("is-running");
+  scan.hidden = false;
+  steps = [];
   paintPhase("Reading this page");
   await chrome.runtime.sendMessage({ type: "run", discipline, prompt: draft.value });
   draft.value = "";
 }
 
+function finishRun(): void {
+  running = false;
+  send.disabled = false;
+  fresh.disabled = false;
+  send.textContent = "Check this page";
+  document.body.classList.remove("is-running");
+  scan.hidden = true;
+}
+
 function paintPhase(label: string): void {
-  let phase = transcript.querySelector(".phase");
-  if (!phase) {
-    phase = document.createElement("p");
-    phase.className = "phase";
-    transcript.prepend(phase);
+  if (!steps.includes(label)) {
+    steps.push(label);
   }
-  phase.textContent = label;
+  let live = transcript.querySelector(".live") as HTMLElement | null;
+  if (!live) {
+    transcript.replaceChildren();
+    live = document.createElement("section");
+    live.className = "live";
+    const head = document.createElement("div");
+    head.className = "live-head";
+    const dot = document.createElement("span");
+    dot.className = "pulse";
+    const text = document.createElement("div");
+    const kicker = document.createElement("p");
+    kicker.className = "kicker";
+    kicker.textContent = "In progress";
+    const title = document.createElement("h2");
+    title.id = "live-title";
+    text.append(kicker, title);
+    head.append(dot, text);
+    const list = document.createElement("ol");
+    list.className = "steps";
+    const stage = document.createElement("div");
+    stage.className = "stage";
+    stage.setAttribute("aria-hidden", "true");
+    const frame = document.createElement("div");
+    frame.className = "frame";
+    for (const width of ["", "short", "", "short"]) {
+      const line = document.createElement("div");
+      line.className = width ? `frame-line ${width}` : "frame-line";
+      frame.append(line);
+    }
+    const beam = document.createElement("div");
+    beam.className = "beam";
+    stage.append(frame, beam);
+    const ghosts = document.createElement("div");
+    ghosts.className = "stats ghost-stats";
+    ghosts.append(ghost(), ghost(), ghost());
+    live.append(head, list, stage, ghosts);
+    transcript.append(live);
+  }
+  const title = live.querySelector("#live-title");
+  if (title) {
+    title.textContent = label;
+  }
+  const list = live.querySelector(".steps") as HTMLOListElement;
+  list.replaceChildren();
+  steps.forEach((step, index) => {
+    const item = document.createElement("li");
+    item.className = index < steps.length - 1 ? "done" : "";
+    const mark = document.createElement("i");
+    item.append(mark, document.createTextNode(step));
+    list.append(item);
+  });
 }
 
 function paintReport(report: TestReport, notes: string[], disciplineId: string, project: string, focus: string): void {
-  const phase = transcript.querySelector(".phase");
-  phase?.remove();
-  const card = document.createElement("article");
-  card.className = "card";
+  transcript.replaceChildren();
+  const result = document.createElement("section");
+  result.className = "result";
   const counts = { pass: 0, fail: 0, blocked: 0 };
   for (const testCase of report.cases) {
     counts[testCase.status] += 1;
   }
-  const bar = document.createElement("div");
-  bar.className = "bar";
-  const score = document.createElement("div");
-  score.className = "score";
-  score.append(scoreItem("pass", counts.pass, "passed"), scoreItem("fail", counts.fail, "failed"), scoreItem("blocked", counts.blocked, "blocked"));
-  const download = document.createElement("button");
-  download.type = "button";
-  download.className = "download";
-  download.textContent = "Download PDF";
-  download.addEventListener("click", () => {
-    void savePdf(report, disciplineId, project, focus);
-  });
-  bar.append(score, download);
-  card.append(bar);
+  const head = document.createElement("div");
+  head.className = "result-head";
+  const kicker = document.createElement("p");
+  kicker.className = "kicker";
+  kicker.textContent = project;
+  const verdict = document.createElement("p");
+  const tone = counts.fail > 0 ? "fail" : counts.blocked > 0 ? "blocked" : "pass";
+  verdict.className = `verdict ${tone}`;
+  verdict.textContent =
+    tone === "fail"
+      ? "Hand this back. The change is named."
+      : tone === "blocked"
+        ? "Part of this tab could not be judged."
+        : "Ready to hand over.";
+  head.append(kicker, verdict);
+  const stats = document.createElement("div");
+  stats.className = "stats";
+  stats.append(stat("pass", counts.pass, "Passed"), stat("fail", counts.fail, "Failed"), stat("blocked", counts.blocked, "Blocked"));
+  result.append(head, stats);
   if (report.summary) {
     const summary = document.createElement("p");
     summary.className = "summary";
     summary.textContent = report.summary;
-    card.append(summary);
+    result.append(summary);
   }
-  for (const testCase of report.cases) {
-    const block = document.createElement("section");
-    block.className = `case ${testCase.status}`;
-    const top = document.createElement("div");
-    top.className = "case-top";
+  const findings = document.createElement("div");
+  findings.className = "findings";
+  report.cases.forEach((testCase, index) => {
+    const block = document.createElement("article");
+    block.className = `finding ${testCase.status}`;
+    block.style.animationDelay = `${index * 45}ms`;
+    const top = document.createElement("header");
     const id = document.createElement("span");
+    id.className = "id";
     id.textContent = testCase.id;
-    const status = document.createElement("span");
-    status.className = "status";
-    status.textContent = testCase.status === "pass" ? "Passed" : testCase.status === "fail" ? "Failed" : "Blocked";
-    top.append(id, status);
+    const pill = document.createElement("span");
+    pill.className = "pill";
+    pill.textContent = testCase.status === "pass" ? "Passed" : testCase.status === "fail" ? "Failed" : "Blocked";
+    top.append(id, pill);
     const title = document.createElement("h3");
     title.textContent = testCase.title;
-    block.append(top, title, field("Expected", testCase.expected), field("Found", testCase.actual));
+    const labels = fieldLabels(disciplineId);
+    block.append(top, title, field(labels[0], testCase.expected), field(labels[1], testCase.actual));
     if (testCase.improvement) {
       const box = document.createElement("div");
       box.className = "improve";
@@ -216,25 +329,76 @@ function paintReport(report: TestReport, notes: string[], disciplineId: string, 
       evidence.append(summary, field("", testCase.evidence));
       block.append(evidence);
     }
-    card.append(block);
-  }
+    findings.append(block);
+  });
+  result.append(findings);
+  const download = document.createElement("button");
+  download.type = "button";
+  download.className = "download";
+  download.textContent = "Download PDF";
+  download.addEventListener("click", () => {
+    void savePdf(report, disciplineId, project, focus);
+  });
+  result.append(download);
   if (notes.length) {
     const line = document.createElement("p");
     line.className = "notes";
     line.textContent = notes.join(" ");
-    card.append(line);
+    result.append(line);
   }
-  transcript.append(card);
+  transcript.append(result);
+}
+
+function stat(kind: string, count: number, label: string): HTMLElement {
+  const card = document.createElement("article");
+  card.className = `stat ${kind}`;
+  const name = document.createElement("p");
+  name.textContent = label;
+  const value = document.createElement("strong");
+  value.textContent = String(count);
+  card.append(name, value);
+  return card;
+}
+
+function fieldLabels(disciplineId: string): [string, string] {
+  if (disciplineId === "api") {
+    return ["What the page expects", "What came back"];
+  }
+  if (disciplineId === "security") {
+    return ["Protection that should exist", "What this page does"];
+  }
+  return ["Expected", "Observed"];
 }
 
 function improveLabel(disciplineId: string): string {
-  if (disciplineId === "security") {
-    return "How to prevent it";
+  return disciplineId === "security" ? "How to prevent it" : "What to change";
+}
+
+function icon(kind: string): SVGElement {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("width", "16");
+  svg.setAttribute("height", "16");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", iconPath(kind));
+  path.setAttribute("stroke", "currentColor");
+  path.setAttribute("stroke-width", "1.8");
+  path.setAttribute("stroke-linecap", "round");
+  path.setAttribute("stroke-linejoin", "round");
+  svg.append(path);
+  return svg;
+}
+
+function iconPath(kind: string): string {
+  if (kind === "api") {
+    return "M9 8 5 12l4 4M15 8l4 4-4 4";
   }
-  if (disciplineId === "api") {
-    return "What to change";
+  if (kind === "security") {
+    return "M12 3.2 5.5 6.1v5.6c0 3.8 2.6 6.2 6.5 7.6 3.9-1.4 6.5-3.8 6.5-7.6V6.1L12 3.2z";
   }
-  return "What to change";
+  return "M7 3.5h10a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-15a1 1 0 0 1 1-1zM9 8h6M9 12h6M9 16h4";
 }
 
 function field(label: string, value: string): HTMLElement {
@@ -248,13 +412,6 @@ function field(label: string, value: string): HTMLElement {
   dd.textContent = value;
   wrap.append(dd);
   return wrap;
-}
-
-function scoreItem(kind: string, count: number, label: string): HTMLSpanElement {
-  const span = document.createElement("span");
-  span.className = kind;
-  span.textContent = `${count} ${label}`;
-  return span;
 }
 
 async function savePdf(report: TestReport, disciplineId: string, project: string, focus: string): Promise<void> {
@@ -274,4 +431,10 @@ async function savePdf(report: TestReport, disciplineId: string, project: string
   link.download = reportFileName(selected?.title || "Testing", generatedAt);
   link.click();
   URL.revokeObjectURL(url);
+}
+
+function ghost(): HTMLElement {
+  const card = document.createElement("div");
+  card.className = "stat";
+  return card;
 }

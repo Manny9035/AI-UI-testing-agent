@@ -7,27 +7,35 @@
     <link rel="stylesheet" href="sidepanel.css" />
   </head>
   <body>
-    <header class="top">
-      <div>
-        <p class="mark">Verity</p>
-        <p id="host" class="host">Open a website</p>
-      </div>
-      <button id="fresh" class="quiet" type="button">New</button>
-    </header>
-    <p id="bridge" class="bridge">Checking this page directly</p>
-    <main id="transcript"></main>
-    <form id="composer">
-      <p id="notice" class="notice" hidden></p>
-      <div id="menu" class="menu" hidden></div>
-      <div class="box">
-        <div id="chips" class="chips"></div>
-        <textarea id="draft" rows="2" placeholder="Anything specific to look at?"></textarea>
-        <div class="row">
-          <button id="plus" class="plus" type="button" aria-label="Choose a test">+</button>
-          <p id="hint" class="hint"></p>
-          <button id="send" class="send" type="submit">Check</button>
+    <header class="brand">
+      <div class="logo">
+        <span class="glyph" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+            <path d="M5 12.5 9.2 17 19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </span>
+        <div>
+          <p class="word">Verity</p>
+          <p id="host" class="host">Open a website</p>
         </div>
       </div>
+      <button id="fresh" class="ghost" type="button">New</button>
+      <div id="scan" class="scan" hidden><span></span></div>
+    </header>
+
+    <p id="bridge" class="bridge">Checking this page directly</p>
+    <nav id="nav" class="nav" aria-label="Checks"></nav>
+    <p id="meaning" class="meaning"></p>
+
+    <main id="transcript"></main>
+
+    <form id="composer" class="composer">
+      <p id="notice" class="notice" hidden></p>
+      <label class="ask">
+        <span id="hint" class="hint"></span>
+        <textarea id="draft" rows="2" placeholder="Anything specific to look at?"></textarea>
+      </label>
+      <button id="send" class="check" type="submit">Check this page</button>
     </form>
     <script src="dist/sidepanel.js"></script>
   </body>
