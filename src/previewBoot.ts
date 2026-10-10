@@ -34,15 +34,15 @@ function deliver(scene: string): void {
     workspaceName: "billing-service",
     fileCount: 18,
     hasKey,
-    agent: "composer-2.5",
-    sandboxLabel: scene === "running" ? "Composer running" : scene === "report" ? "Composer ready" : "No session",
+    agent: "Composer Fast",
+    sandboxLabel: scene === "running" ? "Composer Fast running" : scene === "report" ? "Composer Fast ready" : "No session",
   });
   if (scene === "report" || scene === "running") {
     send({
       type: "snapshot",
       snapshot: {
         running: scene === "running",
-        sandboxLabel: scene === "running" ? "Composer running" : "Composer ready",
+        sandboxLabel: scene === "running" ? "Composer Fast running" : "Composer Fast ready",
         turns: [
           {
             role: "user",

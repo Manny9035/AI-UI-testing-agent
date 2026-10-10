@@ -28,7 +28,10 @@ export class Stopped extends Error {
 }
 
 export class CursorSession {
-  private constructor(readonly agent: SDKAgent) {}
+  private constructor(
+    readonly agent: SDKAgent,
+    private readonly model: ModelSelection,
+  ) {}
 
   get agentId(): string {
     return this.agent.agentId;
@@ -54,14 +57,14 @@ export class CursorSession {
     };
     if (options.agentId) {
       try {
-        return new CursorSession(await Agent.resume(options.agentId, createOptions));
+        return new CursorSession(await Agent.resume(options.agentId, createOptions), model);
       } catch (error) {
         if (!(error instanceof AgentNotFoundError)) {
           throw error;
         }
       }
     }
-    return new CursorSession(await Agent.create(createOptions));
+    return new CursorSession(await Agent.create(createOptions), model);
   }
 
   async send(
@@ -71,7 +74,7 @@ export class CursorSession {
       onEvent: (event: SDKMessage) => void;
     },
   ): Promise<Awaited<ReturnType<Run["wait"]>>> {
-    const run = await this.agent.send(input, { local: { force: true } });
+    const run = await this.agent.send(input, { model: this.model, local: { force: true } });
     const onAbort = () => {
       if (run.supports("cancel")) {
         void run.cancel();
@@ -150,7 +153,19 @@ async function resolveComposer(apiKey: string): Promise<ModelSelection> {
   if (!composer) {
     throw new Error("Composer 2.5 is not available for this Cursor API key.");
   }
-  composerModel = { id: composer.id };
+  const fastVariant = composer.variants?.find((variant) =>
+    variant.params.some((param) => param.id === "fast" && param.value === "true"),
+  );
+  if (fastVariant) {
+    composerModel = { id: composer.id, params: fastVariant.params };
+    return composerModel;
+  }
+  const fast = composer.parameters?.find((parameter) => parameter.id === "fast");
+  const fastValue = fast?.values.find((item) => item.value === "true")?.value;
+  if (!fast || !fastValue) {
+    throw new Error("Composer Fast is not available for this Cursor API key.");
+  }
+  composerModel = { id: composer.id, params: [{ id: fast.id, value: fastValue }] };
   return composerModel;
 }
 

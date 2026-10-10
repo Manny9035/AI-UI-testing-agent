@@ -244,7 +244,7 @@ function paintPills(): void {
   workspacePill.textContent = workspaceName ?? "No folder open";
   sandboxPill.textContent = sandboxLabel;
   sandboxPill.classList.toggle("live", sandboxLabel !== "No session");
-  progress.classList.toggle("on", running || sandboxLabel === "Composer running");
+  progress.classList.toggle("on", running || sandboxLabel === "Composer Fast running");
 }
 
 function renderSnapshot(turns: Turn[], isRunning: boolean): void {
@@ -791,7 +791,7 @@ function refreshComposer(): void {
   send.disabled = !running && !discipline;
   send.setAttribute("aria-label", running ? "Stop" : "Send");
   if (running) {
-    hint.textContent = "Composer is working in this folder";
+    hint.textContent = "Composer Fast is reading this folder";
     return;
   }
   if (!discipline) {

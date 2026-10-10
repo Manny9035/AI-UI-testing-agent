@@ -1,7 +1,7 @@
 {
   "name": "verity",
   "displayName": "Verity",
-  "description": "Functional testing agent for the folder you have open. Composer reads the project, runs the checks, and reports what passed.",
+  "description": "Verity reads the code, chooses the test, and reports what passed. Composer Fast keeps the analysis cheap.",
   "version": "0.1.0",
   "publisher": "verity",
   "license": "MIT",

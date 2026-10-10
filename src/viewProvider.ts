@@ -15,7 +15,7 @@ import { resolveApiKey } from "./env";
 import { clip } from "./format";
 import { webviewDocument } from "./html";
 import { packWorkspace } from "./pack";
-import { buildTurnInput, COMPOSER_MODEL_ID, REPORT_PATH } from "./prompt";
+import { buildTurnInput, COMPOSER_LABEL, REPORT_PATH } from "./prompt";
 import type { ActivityItem, AgentTurn, HostToWebview, Snapshot, UserTurn, WebviewToHost } from "./protocol";
 import { parseVerityReport } from "./report";
 
@@ -139,7 +139,7 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
   private async onMessage(message: WebviewToHost): Promise<void> {
     if (message.type === "ready") {
       this.postStatus();
-      this.post({ type: "init", ...this.statusPayload(), agent: COMPOSER_MODEL_ID });
+      this.post({ type: "init", ...this.statusPayload(), agent: COMPOSER_LABEL });
       this.post({ type: "snapshot", snapshot: this.snapshot() });
       return;
     }
@@ -175,11 +175,11 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
       role: "user",
       disciplineLabel: discipline.slash,
       prompt: prompt.trim(),
-      syncLabel: "Working in this folder",
+      syncLabel: "Composer Fast is reading this folder",
     };
     const agent: AgentTurn = {
       role: "agent",
-      phase: "Starting Composer",
+      phase: "Starting Composer Fast",
       activities: [],
       answer: "",
       startedAt: Date.now(),
@@ -220,8 +220,8 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
       throw new Error("Add CURSOR_API_KEY to the .env file in the Verity folder.");
     }
     const signal = this.abort?.signal ?? AbortSignal.timeout(1);
-    this.setPhase(agent, "Starting Composer");
-    user.syncLabel = "Composer is working in this folder";
+    this.setPhase(agent, "Starting Composer Fast");
+    user.syncLabel = "Composer Fast is reading this folder";
     this.postRun({ type: "sync", label: user.syncLabel });
 
     try {
@@ -450,10 +450,10 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
 
   private sandboxLabel(): string {
     if (this.running) {
-      return "Composer running";
+      return "Composer Fast running";
     }
     if (this.cursorAgentId) {
-      return "Composer ready";
+      return "Composer Fast ready";
     }
     return "No session";
   }

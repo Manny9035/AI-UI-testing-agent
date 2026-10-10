@@ -1,5 +1,7 @@
 # Verity
 
+Verity is the quality engineer in the editor. It reads the code, chooses the cheapest honest test, and reports pass, fail, or blocked. A static page is judged from the files. A real runner is used only when the code requires it. Composer Fast does the analysis.
+
 Functional testing agent for the folder you have open in VS Code.
 
 Verity is a software quality engineering extension. You pick **Functional Testing** from the + menu in the composer, optionally add a focus, and send. Composer runs locally against that folder through the Cursor SDK, executes the cases, and shows the run as it happens: commands, narrative, and a pass / fail / blocked report.
@@ -30,7 +32,7 @@ A prompt is optional. With only the chip selected, Verity runs a functional pass
 
 ## What a run does
 
-- Runs Composer 2.5 through `@cursor/sdk` in the open folder. The agent reads the files it needs and runs the checks there.
+- Runs Composer Fast (`composer-2.5` with `fast: true`) through `@cursor/sdk` in the open folder. The agent reads the files it needs and runs a command only when the code requires it.
 - Reuses the same local agent for follow-up messages.
 - Asks the agent to execute cases, not to guess them, and to finish with a `verity-report` the panel renders as findings.
 
