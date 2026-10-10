@@ -1,18 +1,25 @@
+import { readFile } from "fs/promises";
+import path from "path";
 import * as vscode from "vscode";
+import type { JsonlLocalAgentStore, SDKMessage } from "@cursor/sdk";
+import {
+  CursorSession,
+  explainCursorError,
+  isAbort,
+  isTimeout,
+  openAgentStore,
+  Stopped,
+} from "./cursorSession";
 import { disciplineById } from "./disciplines";
 import { resolveApiKey } from "./env";
-import { formatBytes } from "./format";
-import { GeminiClient, isAbort, isMissingEnvironment, isTimeout } from "./gemini";
+import { clip } from "./format";
 import { webviewDocument } from "./html";
 import { packWorkspace } from "./pack";
-import { AGENT, buildTurnInput } from "./prompt";
-import type { AgentTurn, HostToWebview, Snapshot, UserTurn, WebviewToHost } from "./protocol";
+import { buildTurnInput, COMPOSER_MODEL_ID, REPORT_PATH } from "./prompt";
+import type { ActivityItem, AgentTurn, HostToWebview, Snapshot, UserTurn, WebviewToHost } from "./protocol";
 import { parseVerityReport } from "./report";
-import { visibleActivities, type RunState } from "./reduce";
 
-const STATE_ENV = "verity.environmentId";
-const STATE_PREV = "verity.previousInteractionId";
-const STATE_FP = "verity.fingerprint";
+const STATE_AGENT = "verity.cursorAgentId";
 const STATE_ROOT = "verity.root";
 
 export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Disposable {
@@ -24,9 +31,9 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
   private turns: Array<UserTurn | AgentTurn> = [];
   private running = false;
   private abort?: AbortController;
-  private environmentId?: string;
-  private previousInteractionId?: string;
-  private fingerprint?: string;
+  private cursorAgentId?: string;
+  private session?: CursorSession;
+  private store?: JsonlLocalAgentStore;
   private fileCount = -1;
   private sessionEpoch = 0;
   private runEpoch = 0;
@@ -34,15 +41,11 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
   constructor(private readonly context: vscode.ExtensionContext) {
     this.channel = vscode.window.createOutputChannel("Verity");
     this.subscriptions.push(this.channel);
-    this.environmentId = context.workspaceState.get(STATE_ENV);
-    this.previousInteractionId = context.workspaceState.get(STATE_PREV);
-    this.fingerprint = context.workspaceState.get(STATE_FP);
+    this.cursorAgentId = context.workspaceState.get(STATE_AGENT);
     const storedRoot = context.workspaceState.get<string>(STATE_ROOT);
     const root = this.rootPath();
     if (storedRoot && root && storedRoot !== root) {
-      this.environmentId = undefined;
-      this.previousInteractionId = undefined;
-      this.fingerprint = undefined;
+      this.cursorAgentId = undefined;
     }
     const watcher = vscode.workspace.createFileSystemWatcher(
       new vscode.RelativePattern(this.context.extensionUri, ".env"),
@@ -54,6 +57,11 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
       watcher.onDidDelete(() => this.postStatus()),
       vscode.workspace.onDidChangeWorkspaceFolders(() => {
         this.fileCount = -1;
+        this.cursorAgentId = undefined;
+        const closing = this.session;
+        this.session = undefined;
+        void closing?.close();
+        void this.persist(this.rootPath());
         this.postStatus();
         void this.refreshFileCount();
       }),
@@ -62,6 +70,7 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
 
   dispose(): void {
     this.abort?.abort();
+    void this.session?.close();
     for (const item of this.subscriptions) {
       item.dispose();
     }
@@ -95,7 +104,7 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
       await vscode.workspace.fs.stat(target);
     } catch {
       const example = vscode.Uri.joinPath(this.context.extensionUri, ".env.example");
-      let contents = Buffer.from("GEMINI_API_KEY=\n");
+      let contents = Buffer.from("CURSOR_API_KEY=\n");
       try {
         contents = Buffer.from(await vscode.workspace.fs.readFile(example));
       } catch {
@@ -112,31 +121,25 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
     if (this.running) {
       this.abort?.abort();
     }
-    const previous = this.environmentId;
     const root = this.rootPath();
-    this.environmentId = undefined;
-    this.previousInteractionId = undefined;
-    this.fingerprint = undefined;
+    this.cursorAgentId = undefined;
+    const closing = this.session;
+    this.session = undefined;
     this.turns = [];
     this.running = false;
     await this.persist(root);
     this.post({
       type: "snapshot",
-      snapshot: { turns: [], running: false, sandboxLabel: "No sandbox" },
+      snapshot: { turns: [], running: false, sandboxLabel: "No session" },
     });
     this.postStatus();
-    if (previous && root) {
-      const key = resolveApiKey(this.extensionRoot());
-      if (key) {
-        void new GeminiClient(key, (line) => this.channel.appendLine(line)).deleteEnvironment(previous);
-      }
-    }
+    await closing?.close();
   }
 
   private async onMessage(message: WebviewToHost): Promise<void> {
     if (message.type === "ready") {
       this.postStatus();
-      this.post({ type: "init", ...this.statusPayload(), agent: AGENT });
+      this.post({ type: "init", ...this.statusPayload(), agent: COMPOSER_MODEL_ID });
       this.post({ type: "snapshot", snapshot: this.snapshot() });
       return;
     }
@@ -172,11 +175,11 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
       role: "user",
       disciplineLabel: discipline.slash,
       prompt: prompt.trim(),
-      syncLabel: "Reading the folder…",
+      syncLabel: "Working in this folder",
     };
     const agent: AgentTurn = {
       role: "agent",
-      phase: "Reading the open folder",
+      phase: "Starting Composer",
       activities: [],
       answer: "",
       startedAt: Date.now(),
@@ -189,7 +192,7 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
     this.postRun({ type: "phase", label: agent.phase });
     this.postStatus();
     try {
-      await this.pipeline(user, agent, prompt, true);
+      await this.pipeline(user, agent, prompt);
     } catch (error) {
       if (this.runEpoch === this.sessionEpoch) {
         this.failTurn(agent, error);
@@ -207,132 +210,70 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
     }
   }
 
-  private async pipeline(
-    user: UserTurn,
-    agent: AgentTurn,
-    prompt: string,
-    allowRecovery: boolean,
-  ): Promise<void> {
+  private async pipeline(user: UserTurn, agent: AgentTurn, prompt: string): Promise<void> {
     const root = this.rootPath();
     if (!root) {
       throw new Error("Open a folder first. Verity tests the project in this window.");
     }
     const key = resolveApiKey(this.extensionRoot());
     if (!key) {
-      throw new Error("Add GEMINI_API_KEY to the .env file in the Verity folder.");
+      throw new Error("Add CURSOR_API_KEY to the .env file in the Verity folder.");
     }
-    const client = new GeminiClient(key, (line) => this.channel.appendLine(line));
     const signal = this.abort?.signal ?? AbortSignal.timeout(1);
-    const hadEnvironment = Boolean(this.environmentId);
-
-    this.setPhase(agent, hadEnvironment ? "Reading the open folder" : "Reading the folder and provisioning a sandbox");
-    const packPromise = packWorkspace(root);
-    const bootPromise = hadEnvironment ? null : client.bootstrap(signal);
-    const packed = await packPromise;
-    if (this.runEpoch !== this.sessionEpoch) {
-      return;
-    }
-    if (!packed.files.length) {
-      throw new Error("This folder has no source files Verity can read.");
-    }
-    this.fileCount = packed.files.length;
-    const bytes = packed.files.reduce((sum, file) => sum + file.bytes, 0);
-    user.syncLabel = [
-      `${packed.files.length} files`,
-      formatBytes(bytes),
-      packed.skippedEnv ? ".env left out" : "",
-    ]
-      .filter(Boolean)
-      .join(" · ");
-
-    if (bootPromise) {
-      const boot = await bootPromise;
-      if (this.runEpoch !== this.sessionEpoch) {
-        void client.deleteEnvironment(boot.environmentId);
-        return;
-      }
-      this.environmentId = boot.environmentId;
-      this.previousInteractionId = boot.interactionId;
-      await this.persist(root);
-      this.postStatus();
-    }
-
-    const environmentId = this.environmentId;
-    if (!environmentId) {
-      throw new Error("The sandbox did not return an environment id, so the project could not be uploaded.");
-    }
-
-    const refreshed = this.fingerprint !== packed.fingerprint;
-    if (refreshed) {
-      this.setPhase(agent, `Uploading ${packed.files.length} files`);
-      try {
-        await client.upload(environmentId, packed.archive, signal);
-        if (this.runEpoch !== this.sessionEpoch) {
-          return;
-        }
-      } catch (error) {
-        if (this.runEpoch !== this.sessionEpoch) {
-          return;
-        }
-        if (allowRecovery && hadEnvironment && isMissingEnvironment(error)) {
-          this.channel.appendLine("Stored sandbox is gone. Provisioning a new one.");
-          await this.forgetSandbox();
-          return this.pipeline(user, agent, prompt, false);
-        }
-        throw error;
-      }
-      this.fingerprint = packed.fingerprint;
-      await this.persist(root);
-      user.syncLabel += " · synced";
-    } else {
-      user.syncLabel += " · sandbox is current";
-    }
+    this.setPhase(agent, "Starting Composer");
+    user.syncLabel = "Composer is working in this folder";
     this.postRun({ type: "sync", label: user.syncLabel });
 
-    this.setPhase(agent, "Running functional tests");
-    let finished;
     try {
-      finished = await client.run(
-        {
-          environmentId: this.environmentId ?? environmentId,
-          previousInteractionId: this.previousInteractionId,
-          input: buildTurnInput({
-            userPrompt: prompt,
-            files: packed.files.map((file) => file.path),
-            refreshed,
-          }),
-          onUpdate: (state) => this.applyRun(agent, state),
-        },
-        signal,
-      );
+      this.session = await CursorSession.open({
+        apiKey: key,
+        cwd: root,
+        store: await this.agentStore(),
+        agentId: this.cursorAgentId,
+      });
     } catch (error) {
-      if (allowRecovery && hadEnvironment && isMissingEnvironment(error)) {
-        this.channel.appendLine("Stored sandbox is gone. Provisioning a new one.");
-        await this.forgetSandbox();
-        return this.pipeline(user, agent, prompt, false);
-      }
-      throw error;
+      throw explainCursorError(error);
     }
+    this.cursorAgentId = this.session.agentId;
+    await this.persist(root);
+    this.postStatus();
     if (this.runEpoch !== this.sessionEpoch) {
       return;
     }
 
-    if (finished.environmentId) {
-      this.environmentId = finished.environmentId;
+    this.setPhase(agent, "Running functional tests");
+    this.channel.appendLine(`Composer agent ${this.session.agentId}`);
+    let result;
+    try {
+      result = await this.session.send(buildTurnInput(prompt), {
+        signal,
+        onEvent: (event) => this.onCursorEvent(agent, event),
+      });
+    } catch (error) {
+      throw explainCursorError(error);
     }
-    if (finished.interactionId) {
-      this.previousInteractionId = finished.interactionId;
+    if (this.runEpoch !== this.sessionEpoch) {
+      return;
     }
-    await this.persist(root);
-    this.applyRun(agent, finished.state);
+    if (result.status === "cancelled") {
+      throw new Stopped();
+    }
+    if (result.status === "error") {
+      throw new Error(result.error?.message || "Composer could not finish this run.");
+    }
+    if (result.result) {
+      this.setAnswer(agent, result.result);
+    }
+    if (result.usage) {
+      agent.usage = `${result.usage.totalTokens.toLocaleString("en-US")} tokens`;
+    }
+    this.channel.appendLine(`Run ${result.id} finished${result.requestId ? ` request ${result.requestId}` : ""}`);
 
-    const downloaded = await client.downloadReport(this.environmentId ?? environmentId, signal);
-    const report = (downloaded && parseVerityReport(downloaded)) || parseVerityReport(agent.answer);
+    const report = (await this.readReport(root)) || parseVerityReport(agent.answer);
     if (report) {
       agent.report = report;
       this.postRun({ type: "report", report });
     }
-    agent.usage = finished.state.usage;
     agent.phase = "Finished";
     agent.endedAt = Date.now();
     this.postRun({ type: "phase", label: agent.phase });
@@ -347,28 +288,82 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
     this.post(message);
   }
 
-  private applyRun(agent: AgentTurn, state: RunState): void {
+  private onCursorEvent(agent: AgentTurn, event: SDKMessage): void {
     if (this.runEpoch !== this.sessionEpoch) {
       return;
     }
-    agent.answer = state.answer;
-    if (state.usage) {
-      agent.usage = state.usage;
+    if (event.type === "thinking") {
+      this.upsertActivity(agent, {
+        id: "thinking",
+        kind: "thought",
+        title: "Thinking",
+        body: appendText(agent.activities.find((item) => item.id === "thinking")?.body, event.text),
+      });
+      return;
     }
-    for (const item of visibleActivities(state)) {
-      const existing = agent.activities.find((activity) => activity.id === item.id);
-      if (!existing) {
-        agent.activities.push(item);
-        this.postRun({ type: "activity", item });
-        continue;
-      }
-      if (existing.title !== item.title || existing.body !== item.body) {
-        existing.title = item.title;
-        existing.body = item.body;
-        this.postRun({ type: "activity", item });
-      }
+    if (event.type === "tool_call") {
+      const title = event.status === "running" ? event.name : `${event.name} · ${event.status}`;
+      this.upsertActivity(agent, {
+        id: event.call_id,
+        kind: "tool",
+        title,
+        body: clip([present(event.args), event.status === "running" ? "" : present(event.result)].filter(Boolean).join("\n"), 1200),
+      });
+      this.setPhase(agent, event.status === "running" ? event.name : "Running functional tests");
+      return;
     }
-    this.postRun({ type: "answer", text: state.answer });
+    if (event.type === "assistant") {
+      const text = event.message.content
+        .filter((block): block is { type: "text"; text: string } => block.type === "text")
+        .map((block) => block.text)
+        .join("");
+      if (text) {
+        this.setAnswer(agent, mergeAnswer(agent.answer, text));
+      }
+      return;
+    }
+    if (event.type === "usage") {
+      agent.usage = `${event.usage.totalTokens.toLocaleString("en-US")} tokens`;
+      return;
+    }
+    if (event.type === "task" && event.text) {
+      this.setPhase(agent, event.text);
+    }
+  }
+
+  private upsertActivity(agent: AgentTurn, item: ActivityItem): void {
+    const existing = agent.activities.find((activity) => activity.id === item.id);
+    if (!existing) {
+      agent.activities.push(item);
+    } else {
+      existing.title = item.title;
+      existing.body = item.body;
+      existing.kind = item.kind;
+    }
+    this.postRun({ type: "activity", item });
+  }
+
+  private setAnswer(agent: AgentTurn, text: string): void {
+    agent.answer = text;
+    this.postRun({ type: "answer", text });
+  }
+
+  private async readReport(root: string) {
+    try {
+      const raw = await readFile(path.join(root, REPORT_PATH), "utf8");
+      return parseVerityReport(raw);
+    } catch {
+      return undefined;
+    }
+  }
+
+  private async agentStore(): Promise<JsonlLocalAgentStore> {
+    if (!this.store) {
+      const directory = path.join(this.context.globalStorageUri.fsPath, "cursor-agents");
+      await vscode.workspace.fs.createDirectory(vscode.Uri.file(directory));
+      this.store = await openAgentStore(directory);
+    }
+    return this.store;
   }
 
   private failTurn(agent: AgentTurn, error: unknown): void {
@@ -381,7 +376,8 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
       agent.error = "This run went past the time limit. Start a new session if you want a clean pass.";
       agent.phase = "Timed out";
     } else {
-      agent.error = error instanceof Error ? error.message : "The run failed.";
+      const explained = explainCursorError(error);
+      agent.error = explained.message;
       agent.phase = "Could not finish";
     }
     this.channel.appendLine(agent.error ?? "The run failed.");
@@ -410,7 +406,7 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
       return "Open a folder first. Verity tests the project in this window.";
     }
     if (!resolveApiKey(this.extensionRoot())) {
-      return "Add GEMINI_API_KEY to the .env file in the Verity folder.";
+      return "Add CURSOR_API_KEY to the .env file in the Verity folder.";
     }
     return null;
   }
@@ -454,12 +450,12 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
 
   private sandboxLabel(): string {
     if (this.running) {
-      return "Sandbox running";
+      return "Composer running";
     }
-    if (this.environmentId) {
-      return "Sandbox ready";
+    if (this.cursorAgentId) {
+      return "Composer ready";
     }
-    return "No sandbox";
+    return "No session";
   }
 
   private snapshot(): Snapshot {
@@ -479,21 +475,49 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
   }
 
   private async persist(root: string | undefined): Promise<void> {
-    await this.context.workspaceState.update(STATE_ENV, this.environmentId);
-    await this.context.workspaceState.update(STATE_PREV, this.previousInteractionId);
-    await this.context.workspaceState.update(STATE_FP, this.fingerprint);
+    await this.context.workspaceState.update(STATE_AGENT, this.cursorAgentId);
     await this.context.workspaceState.update(STATE_ROOT, root);
-  }
-
-  private async forgetSandbox(): Promise<void> {
-    this.environmentId = undefined;
-    this.previousInteractionId = undefined;
-    this.fingerprint = undefined;
-    await this.persist(this.rootPath());
   }
 
   private post(message: HostToWebview): void {
     void this.view?.webview.postMessage(message);
+  }
+}
+
+function appendText(current: string | undefined, next: string): string {
+  if (!current) {
+    return next;
+  }
+  if (next.startsWith(current)) {
+    return next;
+  }
+  return current + next;
+}
+
+function mergeAnswer(current: string, next: string): string {
+  if (!next) {
+    return current;
+  }
+  if (!current || next.startsWith(current)) {
+    return next;
+  }
+  if (current.endsWith(next)) {
+    return current;
+  }
+  return current + next;
+}
+
+function present(value: unknown): string {
+  if (value == null) {
+    return "";
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return "";
   }
 }
 

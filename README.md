@@ -2,7 +2,7 @@
 
 Functional testing agent for the folder you have open in VS Code.
 
-Verity is a software quality engineering extension. You pick **Functional Testing** from the + menu in the composer, optionally add a focus, and send. The extension copies the open project into a Gemini managed sandbox, asks the Antigravity agent to design and execute functional cases, and shows the run as it happens: commands, narrative, and a pass / fail / blocked report.
+Verity is a software quality engineering extension. You pick **Functional Testing** from the + menu in the composer, optionally add a focus, and send. Composer runs locally against that folder through the Cursor SDK, executes the cases, and shows the run as it happens: commands, narrative, and a pass / fail / blocked report.
 
 API Testing, UI/UX Testing, Performance Testing, Security Testing, and Data & Database Testing are listed so the discipline matches the challenge. Only functional testing runs in this build.
 
@@ -16,7 +16,7 @@ npm test
 npm run compile
 ```
 
-2. In this extension folder, create `.env` from the example and set your key. Verity reads `GEMINI_API_KEY` from that file, not from the project you open to test.
+2. In this extension folder, create `.env` from the example and set your key. Verity reads `CURSOR_API_KEY` from that file, not from the project you open to test.
 
 ```bash
 copy .env.example .env
@@ -30,9 +30,8 @@ A prompt is optional. With only the chip selected, Verity runs a functional pass
 
 ## What a run does
 
-- Packs source from the open folder, skipping `node_modules`, build output, secrets, and `.env`.
-- Provisions a remote sandbox with Gemini's Interactions API (`antigravity-preview-09-2026`) and uploads the project.
-- Reuses that sandbox for follow-up messages, and uploads again when files change.
+- Runs Composer 2.5 through `@cursor/sdk` in the open folder. The agent reads the files it needs and runs the checks there.
+- Reuses the same local agent for follow-up messages.
 - Asks the agent to execute cases, not to guess them, and to finish with a `verity-report` the panel renders as findings.
 
-The **Verity** output channel logs sandbox phases and HTTP status. It does not log the API key.
+The **Verity** output channel logs the Composer agent id and the run id. It does not log the API key.

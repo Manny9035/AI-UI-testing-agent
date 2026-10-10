@@ -34,15 +34,15 @@ function deliver(scene: string): void {
     workspaceName: "billing-service",
     fileCount: 18,
     hasKey,
-    agent: "antigravity-preview-09-2026",
-    sandboxLabel: scene === "running" ? "Sandbox running" : scene === "report" ? "Sandbox ready" : "No sandbox",
+    agent: "composer-2.5",
+    sandboxLabel: scene === "running" ? "Composer running" : scene === "report" ? "Composer ready" : "No session",
   });
   if (scene === "report" || scene === "running") {
     send({
       type: "snapshot",
       snapshot: {
         running: scene === "running",
-        sandboxLabel: scene === "running" ? "Sandbox running" : "Sandbox ready",
+        sandboxLabel: scene === "running" ? "Composer running" : "Composer ready",
         turns: [
           {
             role: "user",

@@ -71,12 +71,12 @@ export function webviewDocument(options: {
     <header class="top">
       <div class="meta">
         <span class="pill" id="workspace-pill">No folder open</span>
-        <span class="pill" id="sandbox-pill">No sandbox</span>
+        <span class="pill" id="sandbox-pill">No session</span>
       </div>
       <button type="button" class="text-button" id="new-session">New</button>
     </header>
     <div class="keybar" id="keybar" hidden>
-      <p>Add <strong>GEMINI_API_KEY</strong> to the <strong>.env</strong> file in the Verity folder. The project you open is not where the key is read from.</p>
+      <p>Add <strong>CURSOR_API_KEY</strong> to the <strong>.env</strong> file in the Verity folder. The project you open is not where the key is read from.</p>
       <button type="button" class="text-button" id="open-env">Open .env</button>
     </div>
     <main class="transcript" id="transcript" aria-live="polite"></main>

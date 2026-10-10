@@ -1,7 +1,7 @@
 {
   "name": "verity",
   "displayName": "Verity",
-  "description": "Functional testing agent for the folder you have open. Designs cases from real behavior, runs them in a Gemini sandbox, and reports what passed.",
+  "description": "Functional testing agent for the folder you have open. Composer reads the project, runs the checks, and reports what passed.",
   "version": "0.1.0",
   "publisher": "verity",
   "license": "MIT",
@@ -15,7 +15,7 @@
   "keywords": [
     "testing",
     "functional testing",
-    "gemini",
+    "cursor",
     "quality engineering",
     "agent"
   ],
@@ -81,5 +81,8 @@
     "@types/vscode": "^1.90.0",
     "esbuild": "^0.25.5",
     "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@cursor/sdk": "^1.0.37"
   }
 }

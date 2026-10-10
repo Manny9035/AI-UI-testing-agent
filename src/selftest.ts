@@ -95,9 +95,8 @@ function testPackFilter(): void {
   assert.equal(shouldSkipPath("src/app.ts"), false);
   assert.ok(priorityFor("package.json") > priorityFor("src/app.ts"));
   assert.ok(priorityFor("src/app.test.ts") > priorityFor("notes.txt"));
-  const input = buildTurnInput({ userPrompt: "", files: ["src/app.ts"], refreshed: true });
+  const input = buildTurnInput("");
   assert.ok(input.includes("Functional testing"));
-  assert.ok(input.includes("src/app.ts"));
   assert.ok(input.includes("blocked, not passed"));
 }
 

@@ -57,7 +57,7 @@ const SUGGESTIONS = [
 let workspaceName: string | null = null;
 let fileCount = -1;
 let hasKey = false;
-let sandboxLabel = "No sandbox";
+let sandboxLabel = "No session";
 let running = false;
 let hasTurns = false;
 let disciplineId: string | null = null;
@@ -243,8 +243,8 @@ function applyStatus(message: { workspaceName: string | null; fileCount: number;
 function paintPills(): void {
   workspacePill.textContent = workspaceName ?? "No folder open";
   sandboxPill.textContent = sandboxLabel;
-  sandboxPill.classList.toggle("live", sandboxLabel !== "No sandbox");
-  progress.classList.toggle("on", running || sandboxLabel === "Sandbox running");
+  sandboxPill.classList.toggle("live", sandboxLabel !== "No session");
+  progress.classList.toggle("on", running || sandboxLabel === "Composer running");
 }
 
 function renderSnapshot(turns: Turn[], isRunning: boolean): void {
@@ -791,7 +791,7 @@ function refreshComposer(): void {
   send.disabled = !running && !discipline;
   send.setAttribute("aria-label", running ? "Stop" : "Send");
   if (running) {
-    hint.textContent = "Running in the sandbox";
+    hint.textContent = "Composer is working in this folder";
     return;
   }
   if (!discipline) {

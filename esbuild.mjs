@@ -19,7 +19,7 @@ const extension = {
   entryPoints: ["src/extension.ts"],
   outfile: "dist/extension.js",
   bundle: true,
-  external: ["vscode"],
+  external: ["vscode", "@cursor/sdk"],
   format: "cjs",
   platform: "node",
   target: "node18",
