@@ -1,9 +1,0 @@
-# Add backend dependencies here
-fastapi
-uvicorn[standard]
-playwright
-pydantic
-fastapi[standard]
-playwright
-python-dotenv
-google-genai

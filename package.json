@@ -1,0 +1,85 @@
+{
+  "name": "verity",
+  "displayName": "Verity",
+  "description": "Functional testing agent for the folder you have open. Designs cases from real behavior, runs them in a Gemini sandbox, and reports what passed.",
+  "version": "0.1.0",
+  "publisher": "verity",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Testing",
+    "AI"
+  ],
+  "keywords": [
+    "testing",
+    "functional testing",
+    "gemini",
+    "quality engineering",
+    "agent"
+  ],
+  "activationEvents": [
+    "onView:verity.agent"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "verity",
+          "title": "Verity",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "verity": [
+        {
+          "type": "webview",
+          "id": "verity.agent",
+          "name": "Agent",
+          "retainContextWhenHidden": true,
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "verity.focus",
+        "title": "Verity: Open Agent",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "verity.newSession",
+        "title": "Verity: New Session",
+        "icon": "$(add)"
+      },
+      {
+        "command": "verity.configureKey",
+        "title": "Verity: Open API Key File"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "verity.newSession",
+          "when": "view == verity.agent",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "check": "tsc --noEmit",
+    "test": "node esbuild.mjs --test && node dist/selftest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/vscode": "^1.90.0",
+    "esbuild": "^0.25.5",
+    "typescript": "^5.8.3"
+  }
+}
