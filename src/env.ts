@@ -41,12 +41,11 @@ export function readKeyFromEnvFile(filePath: string): string | undefined {
   return undefined;
 }
 
-export function resolveApiKey(workspaceRoot: string | undefined): string | undefined {
-  if (workspaceRoot) {
-    const fromFile = readKeyFromEnvFile(path.join(workspaceRoot, ".env"));
-    if (fromFile) {
-      return fromFile;
-    }
+/** Read the key from the extension folder, never from the project under test. */
+export function resolveApiKey(extensionRoot: string): string | undefined {
+  const fromFile = readKeyFromEnvFile(path.join(extensionRoot, ".env"));
+  if (fromFile) {
+    return fromFile;
   }
   for (const name of KEY_NAMES) {
     const value = process.env[name];

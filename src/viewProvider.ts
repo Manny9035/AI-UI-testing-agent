@@ -44,7 +44,9 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
       this.previousInteractionId = undefined;
       this.fingerprint = undefined;
     }
-    const watcher = vscode.workspace.createFileSystemWatcher("**/.env");
+    const watcher = vscode.workspace.createFileSystemWatcher(
+      new vscode.RelativePattern(this.context.extensionUri, ".env"),
+    );
     this.subscriptions.push(
       watcher,
       watcher.onDidCreate(() => this.postStatus()),
@@ -88,12 +90,7 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
   }
 
   async openEnvFile(): Promise<void> {
-    const folder = vscode.workspace.workspaceFolders?.[0];
-    if (!folder) {
-      this.post({ type: "notice", message: "Open a folder first, then add GEMINI_API_KEY to its .env file." });
-      return;
-    }
-    const target = vscode.Uri.joinPath(folder.uri, ".env");
+    const target = vscode.Uri.joinPath(this.context.extensionUri, ".env");
     try {
       await vscode.workspace.fs.stat(target);
     } catch {
@@ -129,7 +126,7 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
     });
     this.postStatus();
     if (previous && root) {
-      const key = resolveApiKey(root);
+      const key = resolveApiKey(this.extensionRoot());
       if (key) {
         void new GeminiClient(key, (line) => this.channel.appendLine(line)).deleteEnvironment(previous);
       }
@@ -220,9 +217,9 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
     if (!root) {
       throw new Error("Open a folder first. Verity tests the project in this window.");
     }
-    const key = resolveApiKey(root);
+    const key = resolveApiKey(this.extensionRoot());
     if (!key) {
-      throw new Error("Add GEMINI_API_KEY to the .env file in this folder.");
+      throw new Error("Add GEMINI_API_KEY to the .env file in the Verity folder.");
     }
     const client = new GeminiClient(key, (line) => this.channel.appendLine(line));
     const signal = this.abort?.signal ?? AbortSignal.timeout(1);
@@ -412,8 +409,8 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
     if (!this.rootPath()) {
       return "Open a folder first. Verity tests the project in this window.";
     }
-    if (!resolveApiKey(this.rootPath())) {
-      return "Add GEMINI_API_KEY to the .env file in this folder.";
+    if (!resolveApiKey(this.extensionRoot())) {
+      return "Add GEMINI_API_KEY to the .env file in the Verity folder.";
     }
     return null;
   }
@@ -450,7 +447,7 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
     return {
       workspaceName: folder?.name ?? null,
       fileCount: this.fileCount,
-      hasKey: Boolean(resolveApiKey(this.rootPath())),
+      hasKey: Boolean(resolveApiKey(this.extensionRoot())),
       sandboxLabel: this.sandboxLabel(),
     };
   }
@@ -475,6 +472,10 @@ export class VerityViewProvider implements vscode.WebviewViewProvider, vscode.Di
 
   private rootPath(): string | undefined {
     return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  }
+
+  private extensionRoot(): string {
+    return this.context.extensionPath;
   }
 
   private async persist(root: string | undefined): Promise<void> {

@@ -284,7 +284,7 @@ async function explain(response: Response): Promise<string> {
   }
   const short = message.length > 320 ? `${message.slice(0, 319)}…` : message;
   if (response.status === 401 || response.status === 403) {
-    return `Gemini rejected the API key. Check GEMINI_API_KEY in the .env file. ${short}`.trim();
+    return `Gemini rejected the API key. Check GEMINI_API_KEY in the Verity folder .env file. ${short}`.trim();
   }
   if (response.status === 404) {
     return `Not found (404). ${short}`.trim();

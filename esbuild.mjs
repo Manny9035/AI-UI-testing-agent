@@ -3,17 +3,13 @@ import * as esbuild from "esbuild";
 const watch = process.argv.includes("--watch");
 const test = process.argv.includes("--test");
 
-const watchPlugin = {
-  name: "watch-log",
+const errorPlugin = {
+  name: "watch-errors",
   setup(build) {
-    build.onStart(() => {
-      console.log("[watch] build started");
-    });
     build.onEnd((result) => {
-      if (result.errors.length) {
-        console.error(result.errors);
+      for (const error of result.errors) {
+        console.error(error);
       }
-      console.log("[watch] build finished");
     });
   },
 };
@@ -81,10 +77,15 @@ const builds = test ? [selftest] : [extension, webview, previewBoot, writePrevie
 if (watch) {
   const contexts = await Promise.all(
     builds.map((options) =>
-      esbuild.context({ ...options, plugins: [watchPlugin] }),
+      esbuild.context({ ...options, logLevel: "silent", plugins: [errorPlugin] }),
     ),
   );
+  console.log("[watch] build started");
   await Promise.all(contexts.map((context) => context.watch()));
+  console.log("[watch] build finished");
+  // context.watch() resolves after the first build. Hold the process open,
+  // or VS Code ends the debug session and closes the Extension Development Host.
+  await new Promise(() => {});
 } else {
   await Promise.all(builds.map((options) => esbuild.build(options)));
   if (!test) {

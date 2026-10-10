@@ -6,10 +6,9 @@
       "type": "extensionHost",
       "request": "launch",
       "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}",
-        "${workspaceFolder}"
+        "--extensionDevelopmentPath=${workspaceFolder}"
       ],
-      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "outFiles": ["${workspaceFolder}/dist/extension.js"],
       "preLaunchTask": "watch"
     }
   ]

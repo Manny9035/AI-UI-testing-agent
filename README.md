@@ -16,13 +16,13 @@ npm test
 npm run compile
 ```
 
-2. In the folder you have open, create `.env` from the example and set your key. Verity reads `GEMINI_API_KEY` from that file and does not upload it.
+2. In this extension folder, create `.env` from the example and set your key. Verity reads `GEMINI_API_KEY` from that file, not from the project you open to test.
 
 ```bash
 copy .env.example .env
 ```
 
-3. Open this repo in VS Code and press **F5** (the **Run Verity** launch config). In the Extension Development Host, open the project you want to test, then click the Verity icon in the activity bar.
+3. Open this repo in VS Code and press **F5** (the **Run Verity** launch config). A second window opens with no folder. Use **File → Open Folder** and choose the project you want to test, then click the Verity icon.
 
 4. Choose **Functional Testing** with **+**, add a prompt if you want one, and press Enter.
 

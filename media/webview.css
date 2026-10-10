@@ -16,8 +16,7 @@ button, textarea { font: inherit; color: inherit; }
 
 button { cursor: pointer; }
 
-button:focus-visible,
-textarea:focus-visible {
+button:focus-visible {
   outline: 1px solid var(--vscode-focusBorder);
   outline-offset: 1px;
 }
@@ -429,7 +428,7 @@ textarea:focus-visible {
   position: relative;
   background: var(--vscode-input-background);
   color: var(--vscode-input-foreground);
-  border: 1px solid var(--vscode-input-border, transparent);
+  border: 1px solid var(--vscode-input-border, var(--vscode-widget-border));
   border-radius: 6px;
   padding: 4px 4px 2px;
 }
@@ -469,12 +468,15 @@ textarea:focus-visible {
 
 .chip-x:hover { background: var(--vscode-toolbar-hoverBackground); }
 
-textarea {
+.composer textarea,
+.composer textarea:focus,
+.composer textarea:focus-visible {
   display: block;
   width: 100%;
   resize: none;
-  border: 0;
+  border: none;
   outline: none;
+  box-shadow: none;
   background: transparent;
   color: var(--vscode-input-foreground);
   padding: 6px 4px 2px;

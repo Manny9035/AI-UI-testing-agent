@@ -76,7 +76,7 @@ export function webviewDocument(options: {
       <button type="button" class="text-button" id="new-session">New</button>
     </header>
     <div class="keybar" id="keybar" hidden>
-      <p>Add <strong>GEMINI_API_KEY</strong> to the <strong>.env</strong> file in this folder. It stays on your machine.</p>
+      <p>Add <strong>GEMINI_API_KEY</strong> to the <strong>.env</strong> file in the Verity folder. The project you open is not where the key is read from.</p>
       <button type="button" class="text-button" id="open-env">Open .env</button>
     </div>
     <main class="transcript" id="transcript" aria-live="polite"></main>
