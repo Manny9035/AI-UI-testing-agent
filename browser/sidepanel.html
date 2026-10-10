@@ -20,22 +20,24 @@
         </div>
       </div>
       <button id="fresh" class="ghost" type="button">New</button>
-      <div id="scan" class="scan" hidden><span></span></div>
     </header>
-
-    <p id="bridge" class="bridge">Checking this page directly</p>
-    <nav id="nav" class="nav" aria-label="Checks"></nav>
-    <p id="meaning" class="meaning"></p>
 
     <main id="transcript"></main>
 
     <form id="composer" class="composer">
       <p id="notice" class="notice" hidden></p>
-      <label class="ask">
-        <span id="hint" class="hint"></span>
-        <textarea id="draft" rows="2" placeholder="Anything specific to look at?"></textarea>
-      </label>
-      <button id="send" class="check" type="submit">Check this page</button>
+      <div class="box">
+        <div class="tools">
+          <button id="plus" class="plus" type="button" aria-expanded="false" aria-haspopup="menu" aria-label="Choose a check">+</button>
+          <div id="menu" class="menu" role="menu" hidden></div>
+          <button id="chip" class="chip" type="button"></button>
+        </div>
+        <label class="ask">
+          <textarea id="draft" rows="2" placeholder="Anything specific to look at?"></textarea>
+          <span id="spinner" class="spinner" hidden></span>
+        </label>
+        <button id="send" class="check" type="submit">Check this page</button>
+      </div>
     </form>
     <script src="dist/sidepanel.js"></script>
   </body>
