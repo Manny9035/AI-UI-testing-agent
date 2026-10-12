@@ -42,8 +42,7 @@ interface Voice {
   lede: string;
   reading: string;
   expected: string;
-  actual: string;
-  improve: string;
+  actual: string;  improve: string;
 }
 
 export function reportFileName(discipline: string, generatedAt: number): string {
